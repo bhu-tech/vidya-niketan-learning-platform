@@ -4,10 +4,31 @@ const cors = require('cors');
 const passport = require('passport');
 const dotenv = require('dotenv');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
 const app = express();
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login attempts per windowMs
+  message: 'Too many login attempts, please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limiter to all requests
+app.use(generalLimiter);
 
 // Middleware
 app.use(cors({
@@ -38,7 +59,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/online-le
 .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes'));
+// Apply stricter rate limiting to auth routes
+const authRouter = require('./routes/authRoutes');
+app.use('/api/auth', authLimiter, authRouter);
+
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/classes', require('./routes/classRoutes'));
 app.use('/api/materials', require('./routes/materialRoutes'));
