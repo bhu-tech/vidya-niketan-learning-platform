@@ -11,6 +11,7 @@ const StudentNotifications = ({ classId, className }) => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
 
   const fetchNotifications = async () => {

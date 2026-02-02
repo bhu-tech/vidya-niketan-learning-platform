@@ -13,7 +13,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('stats');
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [search, setSearch] = useState('');
@@ -56,13 +55,6 @@ const AdminDashboard = () => {
       // fetch pending approvals
       const pendingData = await adminAPI.getPendingUsers();
       setPending(pendingData || []);
-      // fetch notifications
-      try {
-        const notes = await adminAPI.getNotifications();
-        setNotifications(notes || []);
-      } catch (e) {
-        console.error('Failed to fetch notifications', e);
-      }
       setSelectedIds([]);
       setSelectAll(false);
     } catch (error) {
@@ -120,15 +112,6 @@ const AdminDashboard = () => {
       fetchData();
     } catch (e) {
       console.error('Failed to toggle active', e);
-    }
-  };
-
-  const markNotification = async (id) => {
-    try {
-      await adminAPI.markNotificationRead(id);
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
-    } catch (e) {
-      console.error('Failed to mark notification', e);
     }
   };
 

@@ -48,7 +48,8 @@ const ClassDetail = () => {
     if (user && ['teacher', 'admin'].includes(user.role)) {
       fetchStudents();
     }
-  }, [classId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId, user]);
 
   const fetchStudents = async () => {
     try {

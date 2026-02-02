@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { classAPI, userAPI } from '../utils/api';
+import { classAPI } from '../utils/api';
 import TeacherNotificationPanel from '../components/TeacherNotificationPanel';
 import '../styles/TeacherDashboard.css';
 
@@ -26,6 +26,7 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchMyClasses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
