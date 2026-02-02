@@ -76,8 +76,32 @@ app.use('/api/results', require('./routes/resultRoutes'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  // Log error details to server console
+  console.error('Error:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method
+  });
+
+  // Determine status code
+  const statusCode = err.statusCode || err.status || 500;
+
+  // In production, send generic errors; in development, send detailed errors
+  if (process.env.NODE_ENV === 'production') {
+    res.status(statusCode).json({
+      error: err.message || 'Something went wrong!',
+      status: statusCode
+    });
+  } else {
+    // Development mode - include stack trace
+    res.status(statusCode).json({
+      error: err.message || 'Something went wrong!',
+      status: statusCode,
+      stack: err.stack,
+      details: err
+    });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
