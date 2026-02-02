@@ -2,6 +2,7 @@ const express = require('express');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 const Fee = require('../models/Fee');
 const User = require('../models/User');
+const { feeValidation, mongoIdValidation } = require('../middleware/validation');
 const router = express.Router();
 
 // Get fee details by grade
@@ -43,7 +44,7 @@ router.get('/student/:studentId', authMiddleware, async (req, res) => {
 });
 
 // Create or update fee record
-router.post('/', authMiddleware, adminOnly, async (req, res) => {
+router.post('/', authMiddleware, adminOnly, feeValidation, async (req, res) => {
   try {
     const { studentId, grade, fatherName, dateOfJoining, feeToBeDeposited, feeSubmitted, giftVoucherUsed, referenceIncentive } = req.body;
 

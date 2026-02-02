@@ -1,6 +1,7 @@
 const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
+const { profileUpdateValidation, mongoIdValidation } = require('../middleware/validation');
 const router = express.Router();
 
 // Get user profile
@@ -14,7 +15,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile', authMiddleware, async (req, res) => {
+router.put('/profile', authMiddleware, profileUpdateValidation, async (req, res) => {
   try {
     const { name, bio, phone, designation, profilePicture } = req.body;
     

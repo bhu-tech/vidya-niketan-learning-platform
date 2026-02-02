@@ -3,11 +3,12 @@ const router = express.Router();
 const Result = require('../models/Result');
 const Class = require('../models/Class');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
+const { resultValidation, mongoIdValidation } = require('../middleware/validation');
 
 // @route   POST /api/results
 // @desc    Create/Update result for a student
 // @access  Teacher/Admin only
-router.post('/', authMiddleware, roleMiddleware(['teacher', 'admin']), async (req, res) => {
+router.post('/', authMiddleware, roleMiddleware(['teacher', 'admin']), resultValidation, async (req, res) => {
   try {
     const { student, classId, subject, marksObtained, maxMarks, examType, remarks } = req.body;
 

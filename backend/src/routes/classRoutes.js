@@ -1,10 +1,11 @@
 const express = require('express');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const Class = require('../models/Class');
+const { classValidation, mongoIdValidation } = require('../middleware/validation');
 const router = express.Router();
 
 // Create class (Teacher only)
-router.post('/', authMiddleware, roleMiddleware(['teacher']), async (req, res) => {
+router.post('/', authMiddleware, roleMiddleware(['teacher']), classValidation, async (req, res) => {
   try {
     const { title, description, schedule } = req.body;
 

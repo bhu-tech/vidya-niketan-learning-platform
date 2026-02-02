@@ -5,6 +5,7 @@ const User = require('../models/User');
 const router = express.Router();
 const { sendMail } = require('../utils/mailer');
 const { adminNewSignupTemplate } = require('../utils/emailTemplates');
+const { signupValidation, loginValidation } = require('../middleware/validation');
 
 // Google OAuth
 router.get('/google',
@@ -25,7 +26,7 @@ router.get('/google/callback',
 );
 
 // Regular signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', signupValidation, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -116,7 +117,7 @@ router.post('/signup', async (req, res) => {
 });
 
 // Regular login
-router.post('/login', async (req, res) => {
+router.post('/login', loginValidation, async (req, res) => {
   try {
     const { email, password } = req.body;
 
