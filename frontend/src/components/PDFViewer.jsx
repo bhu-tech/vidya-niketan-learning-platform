@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import '../styles/PDFViewer.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
 const PDFViewer = ({ materialId, fileName, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,7 +14,7 @@ const PDFViewer = ({ materialId, fileName, onClose }) => {
     const token = localStorage.getItem('token');
     if (token) {
       // Create a blob URL from the PDF endpoint with token
-      const url = `http://localhost:5000/api/materials/view/${materialId}?token=${encodeURIComponent(token)}`;
+      const url = `${API_BASE_URL}/api/materials/view/${materialId}?token=${encodeURIComponent(token)}`;
       setPdfUrl(url);
       setLoading(false);
     } else {

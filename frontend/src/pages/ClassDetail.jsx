@@ -6,6 +6,8 @@ import PDFViewer from '../components/PDFViewer';
 import StudentNotifications from '../components/StudentNotifications';
 import '../styles/ClassDetail.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
 const ClassDetail = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
@@ -571,7 +573,7 @@ const ClassDetail = () => {
                         onClick={() => handleViewPDF(material._id, material.fileName)}
                       >
                         <img 
-                          src={`http://localhost:5000${material.thumbnailUrl}`} 
+                          src={`${API_BASE_URL}${material.thumbnailUrl}`} 
                           alt={material.title}
                         />
                         <div className="thumbnail-overlay">
@@ -593,7 +595,7 @@ const ClassDetail = () => {
                       <p>{material.description}</p>
                       <p><small>Uploaded by {material.uploadedBy.name}</small></p>
                       {user && ['teacher', 'admin'].includes(user.role) && (
-                        <a href={`http://localhost:5000/api/materials/download/${material._id}`} className="btn btn-download">
+                        <a href={`${API_BASE_URL}/api/materials/download/${material._id}`} className="btn btn-download">
                           📥 Download PDF
                         </a>
                       )}
