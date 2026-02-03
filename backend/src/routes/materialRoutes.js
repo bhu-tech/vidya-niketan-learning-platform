@@ -5,12 +5,43 @@ const fs = require('fs');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const Material = require('../models/Material');
 const Class = require('../models/Class');
-const { pdfStorage, thumbnailStorage, cloudinary } = require('../config/cloudinary');
+const { cloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
 const router = express.Router();
+
+// Setup storage paths for fallback
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadsDir = isProduction ? '/tmp/uploads' : path.join(__dirname, '../../uploads');
+const pdfsDir = path.join(uploadsDir, 'pdfs');
+const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
+
+// Ensure upload directories exist (fallback mode)
+if (!isCloudinaryConfigured()) {
+  [uploadsDir, pdfsDir, thumbnailsDir].forEach(dir => {
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`Created directory: ${dir}`);
+      }
+    } catch (error) {
+      console.error(`Failed to create directory ${dir}:`, error);
+    }
+  });
+}
 
 // Configure multer with Cloudinary storage
 const upload = multer({
-  storage: multer.diskStorage({}), // Temporary storage before Cloudinary
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      if (file.fieldname === 'file') {
+        cb(null, pdfsDir);
+      } else if (file.fieldname === 'thumbnail') {
+        cb(null, thumbnailsDir);
+      }
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + '-' + file.originalname);
+    }
+  }),
   limits: {
     fileSize: 50 * 1024 * 1024 // 50MB limit
   },
@@ -38,33 +69,47 @@ router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher', 'admi
     const pdfFile = req.files.file[0];
     const thumbnailFile = req.files.thumbnail ? req.files.thumbnail[0] : null;
 
-    // Upload PDF to Cloudinary
-    const pdfUpload = await cloudinary.uploader.upload(pdfFile.path, {
-      folder: 'vidya-niketan/pdfs',
-      resource_type: 'raw',
-      public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`
-    });
+    let fileUrl, thumbnailUrl;
 
-    // Upload thumbnail to Cloudinary (if provided)
-    let thumbnailUpload = null;
-    if (thumbnailFile) {
-      thumbnailUpload = await cloudinary.uploader.upload(thumbnailFile.path, {
-        folder: 'vidya-niketan/thumbnails',
-        resource_type: 'image',
-        transformation: [{ width: 400, height: 300, crop: 'fill' }],
-        public_id: `${Date.now()}-${thumbnailFile.originalname.replace(/\.[^/.]+$/, '')}`
+    // Use Cloudinary if configured, otherwise use local storage
+    if (isCloudinaryConfigured()) {
+      // Upload PDF to Cloudinary
+      const pdfUpload = await cloudinary.uploader.upload(pdfFile.path, {
+        folder: 'vidya-niketan/pdfs',
+        resource_type: 'raw',
+        public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`
       });
+      fileUrl = pdfUpload.secure_url;
+
+      // Upload thumbnail to Cloudinary (if provided)
+      if (thumbnailFile) {
+        const thumbnailUpload = await cloudinary.uploader.upload(thumbnailFile.path, {
+          folder: 'vidya-niketan/thumbnails',
+          resource_type: 'image',
+          transformation: [{ width: 400, height: 300, crop: 'fill' }],
+          public_id: `${Date.now()}-${thumbnailFile.originalname.replace(/\.[^/.]+$/, '')}`
+        });
+        thumbnailUrl = thumbnailUpload.secure_url;
+      }
+
+      // Clean up temp files
+      fs.unlinkSync(pdfFile.path);
+      if (thumbnailFile) fs.unlinkSync(thumbnailFile.path);
+    } else {
+      // Use local file paths
+      fileUrl = `/uploads/pdfs/${pdfFile.filename}`;
+      thumbnailUrl = thumbnailFile ? `/uploads/thumbnails/${thumbnailFile.filename}` : null;
     }
 
     const material = new Material({
       title: req.body.title,
       description: req.body.description,
       category: req.body.category || 'notes',
-      fileUrl: pdfUpload.secure_url,
+      fileUrl: fileUrl,
       fileName: pdfFile.originalname,
       fileSize: pdfFile.size,
       fileType: pdfFile.mimetype,
-      thumbnailUrl: thumbnailUpload ? thumbnailUpload.secure_url : null,
+      thumbnailUrl: thumbnailUrl,
       classId: req.params.classId,
       uploadedBy: req.user.id
     });
