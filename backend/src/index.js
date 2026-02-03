@@ -34,6 +34,8 @@ app.use(generalLimiter);
 const allowedOrigins = [
   'http://localhost:3000',
   'https://lucky-churros-038b55.netlify.app',
+  'https://vidyaniketanhapur.in',
+  'https://www.vidyaniketanhapur.in',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
