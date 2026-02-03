@@ -82,7 +82,6 @@ app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/classes', require('./routes/classRoutes'));
 app.use('/api/materials', require('./routes/materialRoutes'));
-app.use('/api/zoom', require('./routes/zoomRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/fees', require('./routes/feeRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));

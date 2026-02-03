@@ -15,9 +15,13 @@ const ClassSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  zoomMeetingId: String,
-  zoomMeetingLink: String,
-  zoomJoinUrl: String,
+  jitsiRoomName: String, // Unique room name for Jitsi
+  meetingLink: String, // Full Jitsi meeting link
+  isLive: {
+    type: Boolean,
+    default: false
+  },
+  liveStartedAt: Date,
   schedule: {
     date: Date,
     startTime: String,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { classAPI, userAPI, feeAPI, resultAPI } from '../utils/api';
+import JitsiMeeting from '../components/JitsiMeeting';
 import '../styles/StudentDashboard.css';
 
 const StudentDashboard = () => {
@@ -16,9 +17,15 @@ const StudentDashboard = () => {
   const [feeLoading, setFeeLoading] = useState(false);
   const [myResults, setMyResults] = useState([]);
   const [resultsLoading, setResultsLoading] = useState(false);
+  const [liveClasses, setLiveClasses] = useState([]);
+  const [activeJitsiClass, setActiveJitsiClass] = useState(null);
 
   useEffect(() => {
     fetchClasses();
+    checkLiveClasses();
+    // Poll for live classes every 30 seconds
+    const interval = setInterval(checkLiveClasses, 30000);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -58,7 +65,37 @@ const StudentDashboard = () => {
     }
   };
 
-  const isClassLive = (classData) => {
+  const checkLiveClasses = async () => {
+    try {
+      const enrolledClassIds = user?.enrolledClasses?.map(c => typeof c === 'object' ? c._id : c) || [];
+      
+      const liveChecks = await Promise.all(
+        enrolledClassIds.map(async (classId) => {
+          try {
+            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/live-status`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            if (response.ok) {
+              const data = await response.json();
+              return { classId, ...data };
+            }
+          } catch (err) {
+            console.error('Error checking live status:', err);
+          }
+          return null;
+        })
+      );
+
+      const live = liveChecks.filter(c => c && c.isLive);
+      setLiveClasses(live);
+    } catch (error) {
+      console.error('Error checking live classes:', error);
+    }
+  };
+
+  const isClassLive = (classId) => {
     if (!classData.schedule || !classData.zoomJoinUrl) return false;
 
     const now = new Date();
@@ -186,10 +223,31 @@ const StudentDashboard = () => {
           <>
             <section className="enrolled-section">
               <h2>📚 My Classes</h2>
+              
+              {liveClasses.length > 0 && (
+                <div className="live-class-alert">
+                  <h3>🔴 {liveClasses.length} Class{liveClasses.length > 1 ? 'es' : ''} Live Now!</h3>
+                  <div className="live-classes-buttons">
+                    {liveClasses.map(lc => {
+                      const cls = classes.find(c => c._id === lc.classId);
+                      return cls ? (
+                        <button
+                          key={lc.classId}
+                          className="btn-join-live"
+                          onClick={() => handleJoinLiveClass(lc.classId)}
+                        >
+                          🎥 Join {cls.title}
+                        </button>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
+
               {enrolledClasses.length > 0 ? (
             <div className="classes-grid">
               {classes.filter(c => enrolledClasses.includes(c._id)).map(cls => {
-                const isLive = isClassLive(cls);
+                const isLive = isClassLive(cls._id);
                 return (
                   <div key={cls._id} className={`class-card ${isLive ? 'live-class' : ''}`}>
                     {isLive && <div className="live-badge">🔴 LIVE NOW</div>}
@@ -208,14 +266,12 @@ const StudentDashboard = () => {
                     )}
                     <div className="class-actions">
                       {isLive ? (
-                        <a 
-                          href={cls.zoomJoinUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <button 
                           className="btn btn-live"
+                          onClick={() => handleJoinLiveClass(cls._id)}
                         >
                           🎥 Join Live Class
-                        </a>
+                        </button>
                       ) : (
                         <a href={`/class/${cls._id}`} className="btn">View Class</a>
                       )}
@@ -399,6 +455,20 @@ const StudentDashboard = () => {
           </section>
         )}
       </div>
+
+      {/* Jitsi Meeting Modal */}
+      {activeJitsiClass && (
+        <JitsiMeeting
+          classId={activeJitsiClass}
+          onClose={() => {
+            setActiveJitsiClass(null);
+            checkLiveClasses(); // Refresh live status
+          }}
+          onJoined={() => {
+            console.log('Joined live class successfully');
+          }}
+        />
+      )}
     </div>
   );
 };

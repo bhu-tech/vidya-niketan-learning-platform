@@ -1,0 +1,147 @@
+.jitsi-meeting-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jitsi-meeting-container {
+  width: 95%;
+  height: 95%;
+  max-width: 1400px;
+  background: #202124;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.jitsi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: #1a1a1d;
+  border-bottom: 1px solid #333;
+}
+
+.jitsi-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.jitsi-close-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.jitsi-close-btn:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+.jitsi-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.jitsi-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.jitsi-loading .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.jitsi-loading p {
+  font-size: 16px;
+  color: #aaa;
+}
+
+.jitsi-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 40px;
+  text-align: center;
+}
+
+.jitsi-error p {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #ff6b6b;
+}
+
+.jitsi-error button {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.jitsi-error button:hover {
+  background: #4f46e5;
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .jitsi-meeting-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .jitsi-header {
+    padding: 12px 15px;
+  }
+
+  .jitsi-header h3 {
+    font-size: 16px;
+  }
+
+  .jitsi-close-btn {
+    padding: 8px 15px;
+    font-size: 13px;
+  }
+}
