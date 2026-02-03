@@ -22,19 +22,22 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit
+  },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'file' && file.mimetype === 'application/pdf') {
       cb(null, true);
     } else if (file.fieldname === 'thumbnail' && file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type'));
+      cb(new Error('Invalid file type. PDF files only for materials, images only for thumbnails.'));
     }
   }
 });
 
 // Upload material
-router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher']), upload.fields([
+router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher', 'admin']), upload.fields([
   { name: 'file', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
 ]), async (req, res) => {
@@ -49,6 +52,7 @@ router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher']), upl
     const material = new Material({
       title: req.body.title,
       description: req.body.description,
+      category: req.body.category || 'notes',
       fileUrl: `/uploads/pdfs/${pdfFile.filename}`,
       fileName: pdfFile.originalname,
       fileSize: pdfFile.size,
@@ -68,6 +72,7 @@ router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher']), upl
 
     res.status(201).json(material);
   } catch (error) {
+    console.error('Material upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
