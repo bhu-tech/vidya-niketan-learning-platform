@@ -7,15 +7,21 @@ const Material = require('../models/Material');
 const Class = require('../models/Class');
 const router = express.Router();
 
-// Ensure upload directories exist
-const uploadsDir = path.join(__dirname, '../../uploads');
+// Use /tmp for Render's ephemeral storage, or local uploads for development
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadsDir = isProduction ? '/tmp/uploads' : path.join(__dirname, '../../uploads');
 const pdfsDir = path.join(uploadsDir, 'pdfs');
 const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 
+// Ensure upload directories exist
 [uploadsDir, pdfsDir, thumbnailsDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log(`Created directory: ${dir}`);
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(`Created directory: ${dir}`);
+    }
+  } catch (error) {
+    console.error(`Failed to create directory ${dir}:`, error);
   }
 });
 
@@ -183,7 +189,7 @@ router.get('/view/:id', authMiddleware, async (req, res) => {
     }
 
     // View the file inline (no download for students)
-    const filePath = path.join(__dirname, '../../uploads/pdfs', path.basename(material.fileUrl));
+    const filePath = path.join(pdfsDir, path.basename(material.fileUrl));
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=' + material.fileName);
     res.sendFile(filePath);
@@ -207,7 +213,7 @@ router.get('/download/:id', authMiddleware, async (req, res) => {
     }
 
     // Serve the file
-    const filePath = path.join(__dirname, '../../uploads/pdfs', path.basename(material.fileUrl));
+    const filePath = path.join(pdfsDir, path.basename(material.fileUrl));
     res.download(filePath, material.fileName);
   } catch (error) {
     res.status(500).json({ error: error.message });

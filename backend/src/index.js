@@ -59,8 +59,11 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 // Serve thumbnail images publicly (PDFs remain protected)
-app.use('/uploads/thumbnails', express.static(path.join(__dirname, '../uploads/thumbnails')));
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadsPath = isProduction ? '/tmp/uploads' : path.join(__dirname, '../uploads');
+app.use('/uploads/thumbnails', express.static(path.join(uploadsPath, 'thumbnails')));
 
 // Passport initialization
 app.use(passport.initialize());
