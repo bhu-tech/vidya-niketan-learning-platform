@@ -95,8 +95,8 @@ const StudentDashboard = () => {
     }
   };
 
-  const isClassLive = (classId) => {
-    if (!classData.schedule || !classData.zoomJoinUrl) return false;
+  const isClassLive = (classData) => {
+    if (!classData || !classData.schedule || !classData.zoomJoinUrl) return false;
 
     const now = new Date();
     const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
@@ -118,6 +118,17 @@ const StudentDashboard = () => {
     }
 
     return false;
+  };
+
+  const handleJoinLiveClass = (classId) => {
+    const liveClass = liveClasses.find(lc => lc.classId === classId);
+    if (liveClass) {
+      setActiveJitsiClass({
+        classId: classId,
+        roomName: liveClass.jitsiRoomName,
+        className: classes.find(c => c._id === classId)?.title || 'Class'
+      });
+    }
   };
 
   const handleEnroll = async (classId) => {
@@ -247,7 +258,7 @@ const StudentDashboard = () => {
               {enrolledClasses.length > 0 ? (
             <div className="classes-grid">
               {classes.filter(c => enrolledClasses.includes(c._id)).map(cls => {
-                const isLive = isClassLive(cls._id);
+                const isLive = isClassLive(cls);
                 return (
                   <div key={cls._id} className={`class-card ${isLive ? 'live-class' : ''}`}>
                     {isLive && <div className="live-badge">🔴 LIVE NOW</div>}

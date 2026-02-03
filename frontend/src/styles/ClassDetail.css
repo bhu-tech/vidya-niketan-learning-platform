@@ -319,11 +319,6 @@
 .material-item .btn-delete:hover {
   background-color: #c82333;
 }
-}
-
-.material-item .btn:hover {
-  background-color: #218838;
-}
 
 .btn-download {
   background-color: #667eea !important;
