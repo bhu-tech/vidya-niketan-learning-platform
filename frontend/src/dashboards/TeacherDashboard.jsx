@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { classAPI } from '../utils/api';
 import TeacherNotificationPanel from '../components/TeacherNotificationPanel';
+import JitsiMeeting from '../components/JitsiMeeting';
 import '../styles/TeacherDashboard.css';
 
 const TeacherDashboard = () => {
@@ -23,6 +24,17 @@ const TeacherDashboard = () => {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [liveClasses, setLiveClasses] = useState([]);
+  const [activeJitsiClass, setActiveJitsiClass] = useState(null);
+  const [startingLive, setStartingLive] = useState(null);
+
+  useEffect(() => {
+    checkLiveClasses();
+    // Poll for live status every 30 seconds
+    const interval = setInterval(checkLiveClasses, 30000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myClasses]);
 
   useEffect(() => {
     fetchMyClasses();
@@ -40,6 +52,93 @@ const TeacherDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkLiveClasses = async () => {
+    try {
+      const liveChecks = await Promise.all(
+        myClasses.map(async (cls) => {
+          try {
+            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${cls._id}/live-status`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            if (response.ok) {
+              const data = await response.json();
+              return { classId: cls._id, ...data };
+            }
+          } catch (err) {
+            console.error('Error checking live status:', err);
+          }
+          return null;
+        })
+      );
+
+      const live = liveChecks.filter(c => c && c.isLive);
+      setLiveClasses(live);
+    } catch (error) {
+      console.error('Error checking live classes:', error);
+    }
+  };
+
+  const handleStartLive = async (classId, className) => {
+    try {
+      setStartingLive(classId);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/start-live`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to start live class');
+      }
+
+      await checkLiveClasses();
+      alert(`${className} is now LIVE! Students can join.`);
+      
+      // Auto-join the meeting as teacher
+      setActiveJitsiClass(classId);
+    } catch (error) {
+      console.error('Error starting live:', error);
+      alert(error.message || 'Failed to start live class');
+    } finally {
+      setStartingLive(null);
+    }
+  };
+
+  const handleEndLive = async (classId, className) => {
+    const confirmed = window.confirm(`End live class "${className}"?\n\nStudents will no longer be able to join.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/end-live`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to end live class');
+      }
+
+      await checkLiveClasses();
+      alert(`${className} has ended.`);
+    } catch (error) {
+      console.error('Error ending live:', error);
+      alert(error.message || 'Failed to end live class');
+    }
+  };
+
+  const isClassLive = (classId) => {
+    return liveClasses.some(lc => lc.classId === classId);
   };
 
   const handleCreateClass = async (e) => {
@@ -225,13 +324,19 @@ const TeacherDashboard = () => {
               <h2>📚 My Classes</h2>
               {myClasses.length > 0 ? (
                 <div className="classes-grid">
-                  {myClasses.map(cls => (
-                    <div key={cls._id} className="class-card">
+                  {myClasses.map(cls => {
+                    const isLive = isClassLive(cls._id);
+                    return (
+                    <div key={cls._id} className={`class-card ${isLive ? 'live-class' : ''}`}>
+                      {isLive && <div className="live-badge">🔴 LIVE NOW</div>}
                       <h3>{cls.title}</h3>
                       <p>{cls.description}</p>
                       <p><strong>Students Enrolled:</strong> {cls.students.length}</p>
                       <p><strong>Start Date:</strong> {new Date(cls.schedule.date).toLocaleDateString()}</p>
                       <p><strong>Time:</strong> {cls.schedule.startTime} - {cls.schedule.endTime}</p>
+                      {cls.jitsiRoomName && (
+                        <p className="meeting-info">🎥 Meeting Room: {cls.jitsiRoomName}</p>
+                      )}
                       {cls.schedule.frequency === 'daily' && (
                         <p className="frequency-badge daily">📅 Daily</p>
                       )}
@@ -245,6 +350,30 @@ const TeacherDashboard = () => {
                       )}
                       
                       <div className="class-card-actions">
+                        {isLive ? (
+                          <>
+                            <button
+                              onClick={() => setActiveJitsiClass(cls._id)}
+                              className="btn btn-live-join"
+                            >
+                              🎥 Join Live Class
+                            </button>
+                            <button
+                              onClick={() => handleEndLive(cls._id, cls.title)}
+                              className="btn btn-end-live"
+                            >
+                              ⏹️ End Live
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleStartLive(cls._id, cls.title)}
+                            className="btn btn-start-live"
+                            disabled={startingLive === cls._id}
+                          >
+                            {startingLive === cls._id ? '⏳ Starting...' : '▶️ Start Live'}
+                          </button>
+                        )}
                         <a href={`/class/${cls._id}`} className="btn btn-manage">Manage Class</a>
                         <button 
                           onClick={() => handleDeleteClass(cls._id, cls.title)}
@@ -254,7 +383,8 @@ const TeacherDashboard = () => {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               ) : (
                 <p>You haven't created any classes yet.</p>
@@ -267,6 +397,20 @@ const TeacherDashboard = () => {
           <TeacherNotificationPanel myClasses={myClasses} />
         )}
       </div>
+
+      {/* Jitsi Meeting Modal */}
+      {activeJitsiClass && (
+        <JitsiMeeting
+          classId={activeJitsiClass}
+          onClose={() => {
+            setActiveJitsiClass(null);
+            checkLiveClasses(); // Refresh live status
+          }}
+          onJoined={() => {
+            console.log('Joined live class as teacher');
+          }}
+        />
+      )}
     </div>
   );
 };
