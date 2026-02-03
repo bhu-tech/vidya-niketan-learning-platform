@@ -8,6 +8,17 @@ import '../styles/ClassDetail.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
+// Helper to get thumbnail URL
+const getThumbnailUrl = (material) => {
+  if (!material.thumbnailUrl) return null;
+  // If it's already a full URL (Cloudinary), use it directly
+  if (material.thumbnailUrl.startsWith('http')) {
+    return material.thumbnailUrl;
+  }
+  // Legacy local URLs
+  return `${API_BASE_URL}${material.thumbnailUrl}`;
+};
+
 const ClassDetail = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
@@ -598,7 +609,7 @@ const ClassDetail = () => {
                         onClick={() => handleViewPDF(material._id, material.fileName)}
                       >
                         <img 
-                          src={`${API_BASE_URL}${material.thumbnailUrl}`} 
+                          src={getThumbnailUrl(material)} 
                           alt={material.title}
                         />
                         <div className="thumbnail-overlay">
@@ -646,7 +657,7 @@ const ClassDetail = () => {
                         onClick={() => handleViewPDF(material._id, material.fileName)}
                       >
                         <img 
-                          src={`${API_BASE_URL}${material.thumbnailUrl}`} 
+                          src={getThumbnailUrl(material)} 
                           alt={material.title}
                         />
                         <div className="thumbnail-overlay">

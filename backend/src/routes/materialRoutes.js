@@ -5,42 +5,12 @@ const fs = require('fs');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const Material = require('../models/Material');
 const Class = require('../models/Class');
+const { pdfStorage, thumbnailStorage, cloudinary } = require('../config/cloudinary');
 const router = express.Router();
 
-// Use /tmp for Render's ephemeral storage, or local uploads for development
-const isProduction = process.env.NODE_ENV === 'production';
-const uploadsDir = isProduction ? '/tmp/uploads' : path.join(__dirname, '../../uploads');
-const pdfsDir = path.join(uploadsDir, 'pdfs');
-const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
-
-// Ensure upload directories exist
-[uploadsDir, pdfsDir, thumbnailsDir].forEach(dir => {
-  try {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`Created directory: ${dir}`);
-    }
-  } catch (error) {
-    console.error(`Failed to create directory ${dir}:`, error);
-  }
-});
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === 'file') {
-      cb(null, pdfsDir);
-    } else if (file.fieldname === 'thumbnail') {
-      cb(null, thumbnailsDir);
-    }
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-const upload = multer({ 
-  storage,
+// Configure multer with Cloudinary storage
+const upload = multer({
+  storage: multer.diskStorage({}), // Temporary storage before Cloudinary
   limits: {
     fileSize: 50 * 1024 * 1024 // 50MB limit
   },
@@ -68,15 +38,33 @@ router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher', 'admi
     const pdfFile = req.files.file[0];
     const thumbnailFile = req.files.thumbnail ? req.files.thumbnail[0] : null;
 
+    // Upload PDF to Cloudinary
+    const pdfUpload = await cloudinary.uploader.upload(pdfFile.path, {
+      folder: 'vidya-niketan/pdfs',
+      resource_type: 'raw',
+      public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`
+    });
+
+    // Upload thumbnail to Cloudinary (if provided)
+    let thumbnailUpload = null;
+    if (thumbnailFile) {
+      thumbnailUpload = await cloudinary.uploader.upload(thumbnailFile.path, {
+        folder: 'vidya-niketan/thumbnails',
+        resource_type: 'image',
+        transformation: [{ width: 400, height: 300, crop: 'fill' }],
+        public_id: `${Date.now()}-${thumbnailFile.originalname.replace(/\.[^/.]+$/, '')}`
+      });
+    }
+
     const material = new Material({
       title: req.body.title,
       description: req.body.description,
       category: req.body.category || 'notes',
-      fileUrl: `/uploads/pdfs/${pdfFile.filename}`,
+      fileUrl: pdfUpload.secure_url,
       fileName: pdfFile.originalname,
       fileSize: pdfFile.size,
       fileType: pdfFile.mimetype,
-      thumbnailUrl: thumbnailFile ? `/uploads/thumbnails/${thumbnailFile.filename}` : null,
+      thumbnailUrl: thumbnailUpload ? thumbnailUpload.secure_url : null,
       classId: req.params.classId,
       uploadedBy: req.user.id
     });
@@ -188,7 +176,12 @@ router.get('/view/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // View the file inline (no download for students)
+    // For Cloudinary URLs, redirect to the secure URL
+    if (material.fileUrl.startsWith('http')) {
+      return res.redirect(material.fileUrl);
+    }
+
+    // Legacy: For old local file paths (if any remain)
     const filePath = path.join(pdfsDir, path.basename(material.fileUrl));
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=' + material.fileName);
@@ -212,7 +205,14 @@ router.get('/download/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Students cannot download materials' });
     }
 
-    // Serve the file
+    // For Cloudinary URLs, redirect with download flag
+    if (material.fileUrl.startsWith('http')) {
+      // Add download flag to Cloudinary URL
+      const downloadUrl = material.fileUrl.replace('/upload/', '/upload/fl_attachment/');
+      return res.redirect(downloadUrl);
+    }
+
+    // Legacy: For old local file paths
     const filePath = path.join(pdfsDir, path.basename(material.fileUrl));
     res.download(filePath, material.fileName);
   } catch (error) {
