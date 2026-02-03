@@ -100,6 +100,11 @@ const AdminDashboard = () => {
   const handleApprove = async (userId) => {
     try {
       await adminAPI.approveUser(userId);
+      // Remove from pending list immediately
+      setPending(prev => prev.filter(u => u._id !== userId));
+      // Also remove from selected if it was selected
+      setSelectedIds(prev => prev.filter(id => id !== userId));
+      // Optionally refresh stats
       fetchData();
     } catch (error) {
       console.error('Error approving user:', error);
@@ -138,6 +143,12 @@ const AdminDashboard = () => {
     if (!window.confirm(`Approve ${selectedIds.length} users?`)) return;
     try {
       await adminAPI.approveUsers(selectedIds);
+      // Remove approved users from pending list immediately
+      setPending(prev => prev.filter(u => !selectedIds.includes(u._id)));
+      // Clear selection
+      setSelectedIds([]);
+      setSelectAll(false);
+      // Optionally refresh stats
       fetchData();
     } catch (error) {
       console.error('Error bulk approving users:', error);
