@@ -1,18 +1,31 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const Material = require('../models/Material');
 const Class = require('../models/Class');
 const router = express.Router();
 
+// Ensure upload directories exist
+const uploadsDir = path.join(__dirname, '../../uploads');
+const pdfsDir = path.join(uploadsDir, 'pdfs');
+const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
+
+[uploadsDir, pdfsDir, thumbnailsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+});
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === 'file') {
-      cb(null, path.join(__dirname, '../../uploads/pdfs'));
+      cb(null, pdfsDir);
     } else if (file.fieldname === 'thumbnail') {
-      cb(null, path.join(__dirname, '../../uploads/thumbnails'));
+      cb(null, thumbnailsDir);
     }
   },
   filename: (req, file, cb) => {
