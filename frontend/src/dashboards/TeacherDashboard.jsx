@@ -159,7 +159,7 @@ const TeacherDashboard = () => {
 
   const handleDeleteClass = async (classId, className) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${className}"?\n\nThis will permanently remove:\n- All class materials\n- Student enrollments\n- Zoom meeting links\n\nThis action cannot be undone.`
+      `Are you sure you want to delete "${className}"?\n\nThis will permanently remove:\n- All class materials\n- Student enrollments\n- Live class links\n\nThis action cannot be undone.`
     );
     
     if (!confirmed) return;
