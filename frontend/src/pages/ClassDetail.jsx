@@ -44,6 +44,7 @@ const ClassDetail = () => {
     remarks: ''
   });
   const [showResultForm, setShowResultForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchClassData();
@@ -231,13 +232,21 @@ const ClassDetail = () => {
       formDataObj.append('thumbnail', thumbnailInput.files[0]);
     }
 
+    setUploading(true);
     try {
       await materialAPI.upload(classId, formDataObj);
+      alert('✅ Material uploaded successfully!');
       fetchClassData();
       setShowMaterialForm(false);
       setFormData({ title: '', description: '', category: 'notes' });
+      // Reset file inputs
+      pdfInput.value = '';
+      if (thumbnailInput) thumbnailInput.value = '';
     } catch (error) {
       console.error('Error uploading material:', error);
+      alert('❌ Failed to upload material: ' + (error.message || 'Unknown error'));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -570,7 +579,9 @@ const ClassDetail = () => {
                 <input type="file" name="pdfFile" accept="application/pdf" required />
                 <label>Thumbnail Image (optional):</label>
                 <input type="file" name="thumbnail" accept="image/*" />
-                <button type="submit" className="btn-submit">Upload</button>
+                <button type="submit" className="btn-submit" disabled={uploading}>
+                  {uploading ? '⏳ Uploading...' : 'Upload'}
+                </button>
               </form>
             )}
 
