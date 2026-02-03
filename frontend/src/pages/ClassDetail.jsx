@@ -253,9 +253,9 @@ const ClassDetail = () => {
   const handleCreateZoomMeeting = async () => {
     try {
       const meetingData = await zoomAPI.createMeeting(classId);
-      alert('Zoom meeting created! Join URL: ' + meetingData.joinUrl);
+      alert('Live class created! Join URL: ' + meetingData.joinUrl);
     } catch (error) {
-      console.error('Error creating Zoom meeting:', error);
+      console.error('Error creating live class:', error);
     }
   };
 
@@ -345,7 +345,7 @@ const ClassDetail = () => {
           className={activeTab === 'zoom' ? 'active' : ''}
           onClick={() => setActiveTab('zoom')}
         >
-          🎥 Zoom Meeting
+          🎥 Live Class
         </button>
         {user && user.role === 'student' && (
           <button 
@@ -489,17 +489,17 @@ const ClassDetail = () => {
 
         {activeTab === 'zoom' && (
           <section className="zoom-section">
-            <h2>🎥 Zoom Meeting</h2>
+            <h2>🎥 Live Class</h2>
             {classData.zoomJoinUrl ? (
               <>
                 <p>Meeting Link Available</p>
                 <a href={classData.zoomJoinUrl} target="_blank" rel="noopener noreferrer" className="btn-zoom">
-                  Join Zoom Meeting
+                  Join Live Class
                 </a>
               </>
             ) : user && user.role === 'teacher' ? (
               <button className="btn-primary" onClick={handleCreateZoomMeeting}>
-                Create Zoom Meeting
+                Create Live Class
               </button>
             ) : (
               <p>No meeting scheduled yet. Check back later!</p>

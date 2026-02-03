@@ -70,12 +70,11 @@ const classReminderTemplate = (user, classData, minutesBefore) => {
           <div style="text-align: center; margin: 30px 0;">
             <a href="${classData.zoomJoinUrl}" 
                style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);">
-              🎥 Join Zoom Class Now
+              🎥 Join Live Class Now
             </a>
           </div>
         ` : `
-          <p style="text-align: center; color: #6b7280;">Zoom link will be available soon</p>
-        `}
+          <p style="text-align: center; color: #6b7280;">Live class link will be available soon</p>
 
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">
