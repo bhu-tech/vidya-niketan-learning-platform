@@ -12,6 +12,7 @@ const SignUp = () => {
     role: 'student'
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signup } = useAuth();
@@ -26,6 +27,7 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -46,9 +48,12 @@ const SignUp = () => {
           navigate('/student-dashboard');
         }
       } else {
-        // Awaiting admin approval — show message and send to login
-        setError('Account created. Awaiting admin approval before first sign in.');
-        navigate('/login');
+        // Awaiting admin approval — show success message
+        setSuccess('✅ Account created successfully! Waiting for Admin Approval. You will be able to login once an admin approves your account.');
+        // Redirect to login after 5 seconds
+        setTimeout(() => {
+          navigate('/login');
+        }, 5000);
       }
     } catch (err) {
       setError(err.message || 'Sign up failed');
@@ -62,6 +67,7 @@ const SignUp = () => {
       <div className="auth-card">
         <h2>Create Account</h2>
         {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
         
         <form onSubmit={handleSubmit}>
           <input
