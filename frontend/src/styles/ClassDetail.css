@@ -274,6 +274,13 @@
   padding: 15px;
 }
 
+.material-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
 .material-item h4 {
   color: #333;
   margin-bottom: 8px;
@@ -293,11 +300,25 @@
   text-decoration: none;
   padding: 8px 15px;
   border-radius: 4px;
-  margin-top: 10px;
+  margin-top: 0;
   border: none;
   cursor: pointer;
   font-size: inherit;
   font-family: inherit;
+  transition: background-color 0.3s ease;
+}
+
+.material-item .btn:hover {
+  background-color: #218838;
+}
+
+.material-item .btn-delete {
+  background-color: #dc3545;
+}
+
+.material-item .btn-delete:hover {
+  background-color: #c82333;
+}
 }
 
 .material-item .btn:hover {

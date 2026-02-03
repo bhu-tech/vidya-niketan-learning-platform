@@ -261,6 +261,21 @@ const ClassDetail = () => {
     }
   };
 
+  const handleDeleteMaterial = async (materialId, materialTitle) => {
+    if (!window.confirm(`Delete "${materialTitle}"?\n\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await materialAPI.delete(materialId);
+      alert('✅ Material deleted successfully!');
+      fetchClassData();
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      alert('❌ Failed to delete material: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const handleCreateZoomMeeting = async () => {
     try {
       const meetingData = await zoomAPI.createMeeting(classId);
@@ -631,9 +646,17 @@ const ClassDetail = () => {
                       <p>{material.description}</p>
                       <p><small>Uploaded by {material.uploadedBy.name}</small></p>
                       {user && ['teacher', 'admin'].includes(user.role) && (
-                        <a href={`${API_BASE_URL}/api/materials/download/${material._id}`} className="btn btn-download">
-                          📥 Download PDF
-                        </a>
+                        <div className="material-actions">
+                          <a href={`${API_BASE_URL}/api/materials/download/${material._id}`} className="btn btn-download">
+                            📥 Download PDF
+                          </a>
+                          <button 
+                            onClick={() => handleDeleteMaterial(material._id, material.title)}
+                            className="btn btn-delete"
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -679,9 +702,17 @@ const ClassDetail = () => {
                       <p>{material.description}</p>
                       <p><small>Uploaded by {material.uploadedBy.name}</small></p>
                       {user && ['teacher', 'admin'].includes(user.role) && (
-                        <a href={`${API_BASE_URL}/api/materials/download/${material._id}`} className="btn btn-download">
-                          📥 Download PDF
-                        </a>
+                        <div className="material-actions">
+                          <a href={`${API_BASE_URL}/api/materials/download/${material._id}`} className="btn btn-download">
+                            📥 Download PDF
+                          </a>
+                          <button 
+                            onClick={() => handleDeleteMaterial(material._id, material.title)}
+                            className="btn btn-delete"
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
