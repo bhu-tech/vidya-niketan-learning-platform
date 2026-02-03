@@ -13,18 +13,24 @@ const app = express();
 // Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
+  max: 200, // Limit each IP to 200 requests per windowMs
+  message: JSON.stringify({ error: 'Too many requests from this IP, please try again later.' }),
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Too many requests from this IP, please try again later.' });
+  }
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login attempts per windowMs
-  message: 'Too many login attempts, please try again after 15 minutes.',
+  max: 20, // Limit each IP to 20 login attempts per windowMs
+  message: JSON.stringify({ error: 'Too many login attempts, please try again after 15 minutes.' }),
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Too many login attempts, please try again after 15 minutes.' });
+  }
 });
 
 // Apply general rate limiter to all requests

@@ -147,7 +147,8 @@
 }
 
 .material-form input,
-.material-form textarea {
+.material-form textarea,
+.material-form select {
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -156,10 +157,46 @@
 }
 
 .material-form input:focus,
-.material-form textarea:focus {
+.material-form textarea:focus,
+.material-form select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+}
+
+.category-select {
+  background: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.material-section {
+  margin-bottom: 40px;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.material-section h3 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #667eea;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.no-materials-msg {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 30px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 2px dashed #ddd;
 }
 
 .materials-list {

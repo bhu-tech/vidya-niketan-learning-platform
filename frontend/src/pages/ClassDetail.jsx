@@ -17,7 +17,8 @@ const ClassDetail = () => {
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    description: ''
+    description: '',
+    category: 'notes'
   });
   const [loading, setLoading] = useState(true);
   const [viewingPDF, setViewingPDF] = useState(null);
@@ -224,6 +225,7 @@ const ClassDetail = () => {
     const formDataObj = new FormData();
     formDataObj.append('title', formData.title);
     formDataObj.append('description', formData.description);
+    formDataObj.append('category', formData.category);
     formDataObj.append('file', pdfInput.files[0]);
     if (thumbnailInput.files[0]) {
       formDataObj.append('thumbnail', thumbnailInput.files[0]);
@@ -233,7 +235,7 @@ const ClassDetail = () => {
       await materialAPI.upload(classId, formDataObj);
       fetchClassData();
       setShowMaterialForm(false);
-      setFormData({ title: '', description: '' });
+      setFormData({ title: '', description: '', category: 'notes' });
     } catch (error) {
       console.error('Error uploading material:', error);
     }
@@ -555,6 +557,15 @@ const ClassDetail = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                 />
+                <label>Material Type:</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="category-select"
+                >
+                  <option value="notes">📝 Notes / Practice Sheets</option>
+                  <option value="test">📋 Practice Tests</option>
+                </select>
                 <label>PDF File:</label>
                 <input type="file" name="pdfFile" accept="application/pdf" required />
                 <label>Thumbnail Image (optional):</label>
@@ -563,9 +574,12 @@ const ClassDetail = () => {
               </form>
             )}
 
-            {materials.length > 0 ? (
-              <div className="materials-list">
-                {materials.map(material => (
+            {/* Notes / Practice Sheets Section */}
+            <div className="material-section">
+              <h3>📝 Notes & Practice Sheets</h3>
+              {materials.filter(m => m.category === 'notes' || !m.category).length > 0 ? (
+                <div className="materials-list">
+                  {materials.filter(m => m.category === 'notes' || !m.category).map(material => (
                   <div key={material._id} className="material-item">
                     {material.thumbnailUrl ? (
                       <div 
@@ -601,11 +615,60 @@ const ClassDetail = () => {
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p>No materials uploaded yet.</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="no-materials-msg">No notes or practice sheets uploaded yet.</p>
+              )}
+            </div>
+
+            {/* Practice Tests Section */}
+            <div className="material-section">
+              <h3>📋 Practice Tests</h3>
+              {materials.filter(m => m.category === 'test').length > 0 ? (
+                <div className="materials-list">
+                  {materials.filter(m => m.category === 'test').map(material => (
+                  <div key={material._id} className="material-item">
+                    {material.thumbnailUrl ? (
+                      <div 
+                        className="material-thumbnail"
+                        onClick={() => handleViewPDF(material._id, material.fileName)}
+                      >
+                        <img 
+                          src={`${API_BASE_URL}${material.thumbnailUrl}`} 
+                          alt={material.title}
+                        />
+                        <div className="thumbnail-overlay">
+                          <span className="view-icon">👁️</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="material-no-thumbnail">
+                        <button 
+                          onClick={() => handleViewPDF(material._id, material.fileName)}
+                          className="btn"
+                        >
+                          👁️ View PDF
+                        </button>
+                      </div>
+                    )}
+                    <div className="material-info">
+                      <h4>{material.title}</h4>
+                      <p>{material.description}</p>
+                      <p><small>Uploaded by {material.uploadedBy.name}</small></p>
+                      {user && ['teacher', 'admin'].includes(user.role) && (
+                        <a href={`${API_BASE_URL}/api/materials/download/${material._id}`} className="btn btn-download">
+                          📥 Download PDF
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-materials-msg">No practice tests uploaded yet.</p>
+              )}
+            </div>
           </section>
         )}
 

@@ -6,6 +6,11 @@ const MaterialSchema = new mongoose.Schema({
     required: true
   },
   description: String,
+  category: {
+    type: String,
+    enum: ['notes', 'test'],
+    default: 'notes'
+  },
   fileUrl: {
     type: String,
     required: true
