@@ -12,6 +12,7 @@
 .landing-page {
   width: 100%;
   overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* ===== BANNER CAROUSEL SECTION ===== */
@@ -900,25 +901,33 @@
 }
 
 @media (max-width: 768px) {
+  .hero-background {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
   .hero-collage {
-    max-width: 100%;
-    height: 320px;
+    max-width: 400px;
+    height: 300px;
+    margin: 0 auto;
   }
 
   .collage-frame {
-    width: 180px;
-    height: 200px;
+    width: 200px;
+    height: 220px;
     border-width: 6px;
   }
 
   .frame-1 {
-    top: 25px;
-    left: 12px;
+    top: 20px;
+    left: 20px;
+    transform: rotate(-8deg);
   }
 
   .frame-2 {
-    top: 105px;
-    right: 10px;
+    top: 80px;
+    right: 20px;
+    transform: rotate(8deg);
   }
 
   .banner-carousel {
@@ -935,18 +944,32 @@
 
   .hero-content h1 {
     font-size: 2rem;
+    text-align: center;
+  }
+
+  .hero-content h2 {
+    font-size: 1.2rem;
+    text-align: center;
   }
 
   .hero-subtitle {
     font-size: 1rem;
+    text-align: center;
   }
 
   .hero-buttons {
     flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 300px;
   }
 
   .hero-stats {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-around;
     gap: 20px;
   }
 
@@ -981,24 +1004,27 @@
 
 @media (max-width: 480px) {
   .hero-collage {
-    max-width: 100%;
-    height: 260px;
+    max-width: 320px;
+    height: 240px;
+    margin: 0 auto;
   }
 
   .collage-frame {
-    width: 140px;
-    height: 160px;
-    border-width: 5px;
+    width: 160px;
+    height: 180px;
+    border-width: 4px;
   }
 
   .frame-1 {
-    top: 20px;
-    left: 8px;
+    top: 15px;
+    left: 15px;
+    transform: rotate(-6deg);
   }
 
   .frame-2 {
-    top: 85px;
-    right: 8px;
+    top: 60px;
+    right: 15px;
+    transform: rotate(6deg);
   }
 
   .banner-carousel {
@@ -1006,7 +1032,7 @@
   }
 
   .banner-slide img {
-    padding: 10px;
+    object-fit: cover;
   }
 
   .banner-dots {
@@ -1025,14 +1051,29 @@
 
   .hero-content h1 {
     font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .hero-content h2 {
+    font-size: 1rem;
+    text-align: center;
   }
 
   .hero-subtitle {
     font-size: 0.9rem;
     margin-bottom: 20px;
+    text-align: center;
   }
 
-  .btn {
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 280px;
     padding: 12px 24px;
     font-size: 0.95rem;
   }
@@ -1047,12 +1088,33 @@
     font-size: 1.8rem;
   }
 
+  .stat p {
+    font-size: 0.85rem;
+  }
+
   .results-grid {
     grid-template-columns: 1fr;
+    padding: 0 15px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    padding: 0 15px;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    padding: 0 15px;
   }
 
   .youtube-grid {
     grid-template-columns: 1fr;
+    padding: 0 15px;
+  }
+
+  .section-title {
+    font-size: 1.6rem;
+    padding: 0 15px;
   }
 
   .cta-content h2 {
@@ -1066,5 +1128,10 @@
   .footer-content {
     grid-template-columns: 1fr;
     gap: 30px;
+    padding: 0 15px;
+  }
+
+  .container {
+    padding: 0 15px;
   }
 }
