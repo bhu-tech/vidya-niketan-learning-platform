@@ -45,13 +45,13 @@ const LandingPage = () => {
         <div className="banner-carousel">
           <div className="banner-track">
             <div className="banner-slide">
-              <img src="/images/banner1.jpg" alt="Banner 1" />
+              <img src="/images/banner-1.png" alt="Banner 1" />
             </div>
             <div className="banner-slide">
-              <img src="/images/banner2.jpg" alt="Banner 2" />
+              <img src="/images/banner-2.jpg" alt="Banner 2" />
             </div>
             <div className="banner-slide">
-              <img src="/images/banner3.jpg" alt="Banner 3" />
+              <img src="/images/banner-3.jpg" alt="Banner 3" />
             </div>
           </div>
           <div className="banner-dots">
