@@ -261,7 +261,7 @@ const LandingPage = () => {
           <div className="footer-content">
             <div className="footer-column">
               <h4>Vidya Niketan</h4>
-              <p>India's trusted and affordable educational platform serving millions of students worldwide.</p>
+              <p>Best coaching institute in Hapur for CBSE Class IX-XII, JEE & NEET preparation.</p>
               <div className="social-links">
                 <a href="#facebook">f</a>
                 <a href="#instagram">📷</a>
@@ -271,22 +271,20 @@ const LandingPage = () => {
             </div>
 
             <div className="footer-column">
-              <h4>Quick Links</h4>
+              <h4>Contact Info</h4>
               <ul>
-                <li><a href="#about">About Us</a></li>
-                <li><a href="#contact">Contact Us</a></li>
-                <li><a href="#careers">Careers</a></li>
-                <li><a href="#blog">Blog</a></li>
+                <li>📍 Vidya Niketan, Old NH 24, Babugarh Cantt, Hapur, Uttar Pradesh</li>
+                <li>📞 <a href="tel:+916376333741">+91 6376333741</a></li>
               </ul>
             </div>
 
             <div className="footer-column">
-              <h4>Popular Exams</h4>
+              <h4>Quick Links</h4>
               <ul>
-                <li><a href="#jee">IIT JEE</a></li>
-                <li><a href="#neet">NEET</a></li>
-                <li><a href="#gate">GATE</a></li>
-                <li><a href="#upsc">UPSC</a></li>
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#contact">Contact Us</a></li>
+                <li><a href="#courses">Our Courses</a></li>
+                <li><a href="#results">Results</a></li>
               </ul>
             </div>
 
