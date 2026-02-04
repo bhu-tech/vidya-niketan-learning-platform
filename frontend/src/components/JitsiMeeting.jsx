@@ -85,7 +85,11 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
               prejoinPageEnabled: false,
               startWithAudioMuted: false,
               startWithVideoMuted: false,
-              disableDeepLinking: true
+              disableDeepLinking: true,
+              enableNoisyMicDetection: false,
+              p2p: {
+                enabled: false
+              }
             },
             interfaceConfigOverwrite: {
               TOOLBAR_BUTTONS: [
@@ -94,7 +98,11 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
                 'videoquality', 'tileview'
               ],
               SHOW_JITSI_WATERMARK: false,
-              SHOW_WATERMARK_FOR_GUESTS: false
+              SHOW_WATERMARK_FOR_GUESTS: false,
+              DEFAULT_BACKGROUND: '#474747',
+              DISABLE_VIDEO_BACKGROUND: false,
+              filmStripOnly: false,
+              VERTICAL_FILMSTRIP: true
             },
             userInfo: {
               displayName: config.userInfo?.displayName || 'User',
