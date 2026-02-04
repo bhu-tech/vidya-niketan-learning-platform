@@ -281,7 +281,12 @@ const ClassDetail = () => {
 
   const handleCreateZoomMeeting = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/classes/${classId}/start-live`, {
+      const url = `${API_BASE_URL}/api/classes/${classId}/start-live`;
+      console.log('Starting live class - URL:', url);
+      console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('classId:', classId);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -289,8 +294,18 @@ const ClassDetail = () => {
         }
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        const data = await response.json();
+        const text = await response.text();
+        console.error('Error response:', text);
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error(`Server returned ${response.status}: ${text.substring(0, 200)}`);
+        }
         throw new Error(data.error || 'Failed to start live class');
       }
 
