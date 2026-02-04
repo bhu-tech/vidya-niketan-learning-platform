@@ -42,11 +42,13 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
         // Construct Jitsi meeting URL with config
         const domain = config.domain || 'meet.jit.si';
         const roomName = config.roomName;
+        const password = config.password || '';
         const displayName = encodeURIComponent(config.userInfo?.displayName || 'User');
         
-        const meetingUrl = `https://${domain}/${roomName}#userInfo.displayName="${displayName}"&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.prejoinPageEnabled=false`;
+        // Include password in URL so it auto-fills
+        const meetingUrl = `https://${domain}/${roomName}#userInfo.displayName="${displayName}"&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.prejoinPageEnabled=false&roomPassword="${password}"`;
         
-        console.log('Opening Jitsi meeting in new window:', meetingUrl);
+        console.log('Opening Jitsi meeting in new window (password protected)');
 
         // Open in new window
         const newWindow = window.open(

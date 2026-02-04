@@ -21,6 +21,7 @@ router.post('/', authMiddleware, roleMiddleware(['teacher']), classValidation, a
     const jitsiConfig = createJitsiMeeting(newClass);
     newClass.jitsiRoomName = jitsiConfig.jitsiRoomName;
     newClass.meetingLink = jitsiConfig.meetingLink;
+    newClass.meetingPassword = jitsiConfig.meetingPassword;
 
     await newClass.save();
     res.status(201).json(newClass);
@@ -148,7 +149,7 @@ router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
     }
 
     const user = { name: req.user.name || 'User', email: req.user.email };
-    const config = getJitsiEmbedConfig(classData.jitsiRoomName, user);
+    const config = getJitsiEmbedConfig(classData.jitsiRoomName, user, classData.meetingPassword);
 
     res.json({
       ...config,

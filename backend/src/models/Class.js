@@ -17,6 +17,7 @@ const ClassSchema = new mongoose.Schema({
   }],
   jitsiRoomName: String, // Unique room name for Jitsi
   meetingLink: String, // Full Jitsi meeting link
+  meetingPassword: String, // Password for the meeting
   isLive: {
     type: Boolean,
     default: false

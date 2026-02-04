@@ -27,6 +27,18 @@ const generateJitsiMeetingLink = (roomName) => {
 };
 
 /**
+ * Generate a secure meeting password
+ * @param {Object} classData - The class object
+ * @returns {String} - Meeting password
+ */
+const generateMeetingPassword = (classData) => {
+  // Generate a password based on class ID (consistent for same class)
+  const classId = classData._id.toString();
+  const hash = require('crypto').createHash('sha256').update(classId).digest('hex');
+  return hash.substring(0, 12); // 12 character password
+};
+
+/**
  * Create Jitsi meeting configuration for a class
  * @param {Object} classData - The class object
  * @returns {Object} - Jitsi configuration
@@ -34,10 +46,12 @@ const generateJitsiMeetingLink = (roomName) => {
 const createJitsiMeeting = (classData) => {
   const roomName = generateJitsiRoomName(classData);
   const meetingLink = generateJitsiMeetingLink(roomName);
+  const password = generateMeetingPassword(classData);
   
   return {
     jitsiRoomName: roomName,
     meetingLink: meetingLink,
+    meetingPassword: password,
     isLive: false
   };
 };
@@ -46,11 +60,13 @@ const createJitsiMeeting = (classData) => {
  * Get Jitsi embed configuration
  * @param {String} roomName - The Jitsi room name
  * @param {Object} user - The user object
+ * @param {String} password - The meeting password
  * @returns {Object} - Configuration for Jitsi iframe
  */
-const getJitsiEmbedConfig = (roomName, user) => {
+const getJitsiEmbedConfig = (roomName, user, password) => {
   return {
     roomName: roomName,
+    password: password,
     domain: 'meet.jit.si',
     configOverwrite: {
       startWithAudioMuted: false,
@@ -95,6 +111,7 @@ const getJitsiEmbedConfig = (roomName, user) => {
 module.exports = {
   generateJitsiRoomName,
   generateJitsiMeetingLink,
+  generateMeetingPassword,
   createJitsiMeeting,
   getJitsiEmbedConfig
 };
