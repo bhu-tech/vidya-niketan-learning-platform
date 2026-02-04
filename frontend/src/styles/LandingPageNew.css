@@ -32,7 +32,7 @@
 .banner-track {
   display: flex;
   height: 100%;
-  animation: bannerSlide 15s linear infinite;
+  animation: bannerSlide 20s linear infinite;
 }
 
 .banner-slide {
@@ -49,22 +49,31 @@
 .banner-slide img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 30px;
+  object-fit: cover;
+  object-position: center;
 }
 
 @keyframes bannerSlide {
   0% {
     transform: translateX(0);
   }
-  40% {
+  30% {
     transform: translateX(0);
   }
-  50% {
+  33.33% {
     transform: translateX(-100%);
   }
-  100% {
+  63.33% {
     transform: translateX(-100%);
+  }
+  66.66% {
+    transform: translateX(-200%);
+  }
+  96.66% {
+    transform: translateX(-200%);
+  }
+  100% {
+    transform: translateX(-300%);
   }
 }
 
@@ -96,13 +105,17 @@
 }
 
 @keyframes dotAnimation {
-  0%, 40% {
+  0%, 30% {
     background: rgba(255, 255, 255, 0.5);
     box-shadow: none;
   }
-  50%, 100% {
+  33.33%, 63.33% {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     box-shadow: 0 0 10px rgba(124, 58, 237, 0.6);
+  }
+  66.66%, 96.66% {
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: none;
   }
 }
 
@@ -851,7 +864,7 @@
   }
 
   .banner-slide img {
-    padding: 20px;
+    object-fit: cover;
   }
 
   .banner-dots {
@@ -913,7 +926,7 @@
   }
 
   .banner-slide img {
-    padding: 15px;
+    object-fit: cover;
   }
 
   .hero-section {

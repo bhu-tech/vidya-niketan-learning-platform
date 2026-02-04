@@ -45,15 +45,19 @@ const LandingPage = () => {
         <div className="banner-carousel">
           <div className="banner-track">
             <div className="banner-slide">
-              <img src="/images/hero-3.jpg" alt="Banner 1" />
+              <img src="/images/banner1.jpg" alt="Banner 1" />
             </div>
             <div className="banner-slide">
-              <img src="/images/hero-4.jpg" alt="Banner 2" />
+              <img src="/images/banner2.jpg" alt="Banner 2" />
+            </div>
+            <div className="banner-slide">
+              <img src="/images/banner3.jpg" alt="Banner 3" />
             </div>
           </div>
           <div className="banner-dots">
-            <span className="dot active" style={{animation: 'dotAnimation 8s linear infinite'}}></span>
-            <span className="dot" style={{animation: 'dotAnimation 8s linear infinite 4s'}}></span>
+            <span className="dot active" style={{animation: 'dotAnimation 12s linear infinite'}}></span>
+            <span className="dot" style={{animation: 'dotAnimation 12s linear infinite 4s'}}></span>
+            <span className="dot" style={{animation: 'dotAnimation 12s linear infinite 8s'}}></span>
           </div>
         </div>
       </section>
