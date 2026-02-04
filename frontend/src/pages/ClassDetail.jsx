@@ -7,7 +7,8 @@ import StudentNotifications from '../components/StudentNotifications';
 import JitsiMeeting from '../components/JitsiMeeting';
 import '../styles/ClassDetail.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = API_URL.replace('/api', '');
 
 // Helper to get thumbnail URL
 const getThumbnailUrl = (material) => {
