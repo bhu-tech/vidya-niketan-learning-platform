@@ -61,13 +61,15 @@ const createJitsiMeeting = (classData) => {
  * @param {String} roomName - The Jitsi room name
  * @param {Object} user - The user object
  * @param {String} password - The meeting password
+ * @param {Boolean} isModerator - Whether user is moderator (teacher)
  * @returns {Object} - Configuration for Jitsi iframe
  */
-const getJitsiEmbedConfig = (roomName, user, password) => {
+const getJitsiEmbedConfig = (roomName, user, password, isModerator = false) => {
   return {
     roomName: roomName,
     password: password,
     domain: 'meet.jit.si',
+    isModerator: isModerator,
     configOverwrite: {
       startWithAudioMuted: false,
       startWithVideoMuted: false,
@@ -77,8 +79,10 @@ const getJitsiEmbedConfig = (roomName, user, password) => {
       disableModeratorIndicator: false,
       startScreenSharing: false,
       enableEmailInStats: false,
-      enableLobbyChat: false,
-      disableLobby: true,
+      // Enable lobby - students wait for teacher approval
+      enableLobbyChat: true,
+      lobbyEnabled: true,
+      requireDisplayName: true,
       enableNoAudioDetection: true,
       enableNoisyMicDetection: true,
       resolution: 720,

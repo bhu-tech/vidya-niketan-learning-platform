@@ -32,7 +32,16 @@ const AttendanceSchema = new mongoose.Schema(
     markedAt: {
       type: Date,
       default: Date.now
-    }
+    },
+    activeSession: {
+      type: Boolean,
+      default: false
+    },
+    joinToken: {
+      type: String,
+      index: true
+    },
+    tokenExpiry: Date
   },
   { timestamps: true }
 );

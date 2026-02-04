@@ -129,6 +129,80 @@ router.post('/:id/end-live', authMiddleware, roleMiddleware(['teacher']), async 
   }
 });
 
+// Request join token (prevents duplicate joins)
+router.post('/:id/request-join-token', authMiddleware, async (req, res) => {
+  try {
+    const Attendance = require('../models/Attendance');
+    const crypto = require('crypto');
+    
+    const classData = await Class.findById(req.params.id)
+      .populate('teacher', 'name email')
+      .populate('students', '_id');
+    
+    if (!classData) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    if (!classData.isLive) {
+      return res.status(400).json({ error: 'Class is not live' });
+    }
+
+    // Check if user is enrolled or is the teacher
+    const isTeacher = classData.teacher._id.toString() === req.user.id;
+    const isStudent = classData.students.some(s => s._id.toString() === req.user.id);
+
+    if (!isTeacher && !isStudent) {
+      return res.status(403).json({ error: 'You are not enrolled in this class' });
+    }
+
+    // For students - check if already in an active session
+    if (isStudent) {
+      const activeSession = await Attendance.findOne({
+        class: req.params.id,
+        student: req.user.id,
+        activeSession: true,
+        tokenExpiry: { $gt: new Date() }
+      });
+
+      if (activeSession) {
+        return res.status(400).json({ 
+          error: 'You already have an active session. Please close your existing meeting window first.' 
+        });
+      }
+    }
+
+    // Generate one-time token
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+
+    // Create or update attendance record
+    if (isStudent) {
+      await Attendance.findOneAndUpdate(
+        {
+          class: req.params.id,
+          student: req.user.id,
+          date: new Date().setHours(0, 0, 0, 0)
+        },
+        {
+          joinTime: new Date(),
+          classStartTime: classData.liveStartedAt,
+          activeSession: true,
+          joinToken: token,
+          tokenExpiry: tokenExpiry
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    res.json({ 
+      token,
+      expiresIn: 120 // seconds
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get Jitsi configuration for joining (Students & Teachers)
 router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
   try {
@@ -148,16 +222,82 @@ router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'You are not enrolled in this class' });
     }
 
+    // Determine if user is moderator (teacher)
+    const isModerator = isTeacher;
+
+    // For students, validate join token
+    if (!isModerator) {
+      const { token } = req.query;
+      
+      if (!token) {
+        return res.status(400).json({ error: 'Join token required' });
+      }
+
+      // Find and validate token
+      const attendance = await Attendance.findOne({
+        class: classData._id,
+        student: req.user._id,
+        joinToken: token
+      });
+
+      if (!attendance) {
+        return res.status(403).json({ error: 'Invalid or expired join token' });
+      }
+
+      if (!attendance.tokenExpiry || attendance.tokenExpiry < Date.now()) {
+        return res.status(403).json({ error: 'Join token has expired' });
+      }
+
+      // Consume the token (one-time use) and clear active session on successful join
+      attendance.joinToken = null;
+      attendance.tokenExpiry = null;
+      // Note: activeSession will be cleared when student leaves the meeting
+      await attendance.save();
+    }
+
     const user = { name: req.user.name || 'User', email: req.user.email };
-    const config = getJitsiEmbedConfig(classData.jitsiRoomName, user, classData.meetingPassword);
+    const config = getJitsiEmbedConfig(classData.jitsiRoomName, user, classData.meetingPassword, isModerator);
 
     res.json({
       ...config,
       isLive: classData.isLive,
       meetingLink: classData.meetingLink,
       className: classData.title,
-      teacherName: classData.teacher.name
+      teacherName: classData.teacher.name,
+      isModerator
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// End active session (when student leaves meeting)
+router.post('/:id/end-session', authMiddleware, async (req, res) => {
+  try {
+    const classData = await Class.findById(req.params.id);
+    
+    if (!classData) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    // Clear active session for this student
+    await Attendance.findOneAndUpdate(
+      {
+        class: classData._id,
+        student: req.user._id,
+        date: {
+          $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          $lt: new Date(new Date().setHours(23, 59, 59, 999))
+        }
+      },
+      {
+        activeSession: false,
+        joinToken: null,
+        tokenExpiry: null
+      }
+    );
+
+    res.json({ success: true, message: 'Session ended' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

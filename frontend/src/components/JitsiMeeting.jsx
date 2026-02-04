@@ -5,20 +5,59 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [meetingWindow, setMeetingWindow] = useState(null);
+  const [joinToken, setJoinToken] = useState(null);
 
   useEffect(() => {
     let windowCheckInterval = null;
     let mounted = true;
 
+    const requestJoinToken = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/request-join-token`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to request join token');
+        }
+
+        const data = await response.json();
+        return data.token;
+      } catch (err) {
+        throw err;
+      }
+    };
+
     const openJitsiMeeting = async () => {
       try {
+        // First, request a join token (for students) or skip if teacher
+        let token = null;
+        try {
+          token = await requestJoinToken();
+          if (mounted) setJoinToken(token);
+        } catch (tokenError) {
+          // If token request fails, it might be because user is teacher (moderator)
+          // Teachers don't need tokens, so we'll try to proceed without one
+          console.log('Token request note:', tokenError.message);
+        }
+
         // Fetch Jitsi configuration from backend
-        const token = localStorage.getItem('token');
+        const authToken = localStorage.getItem('token');
         console.log('Fetching Jitsi config for class:', classId);
         
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config`, {
+        const configUrl = token 
+          ? `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config?token=${token}`
+          : `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config`;
+
+        const response = await fetch(configUrl, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${authToken}`
           }
         });
 
@@ -100,6 +139,20 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
       }
     };
 
+    const endSession = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/end-session`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('Error ending session:', err);
+      }
+    };
+
     openJitsiMeeting();
 
     // Cleanup
@@ -109,6 +162,8 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
       if (meetingWindow && !meetingWindow.closed) {
         meetingWindow.close();
       }
+      // End session when component unmounts
+      endSession();
     };
   }, [classId, onClose, onJoined]);
 
@@ -116,6 +171,23 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
     if (meetingWindow && !meetingWindow.closed) {
       meetingWindow.close();
     }
+    
+    // End session when user manually closes
+    const endSession = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/end-session`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('Error ending session:', err);
+      }
+    };
+    endSession();
+
     if (onClose) {
       onClose();
     }
