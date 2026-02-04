@@ -1,17 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import '../styles/JitsiMeeting.css';
 
 const JitsiMeeting = ({ classId, onClose, onJoined }) => {
-  const jitsiContainer = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [jitsiApi, setJitsiApi] = useState(null);
+  const [meetingWindow, setMeetingWindow] = useState(null);
 
   useEffect(() => {
-    let api = null;
+    let windowCheckInterval = null;
     let mounted = true;
 
-    const loadJitsiMeet = async () => {
+    const openJitsiMeeting = async () => {
       try {
         // Fetch Jitsi configuration from backend
         const token = localStorage.getItem('token');
@@ -40,164 +39,80 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
           return;
         }
 
-        // Load Jitsi Meet External API
-        if (!window.JitsiMeetExternalAPI) {
-          console.log('Loading Jitsi external API script...');
-          const script = document.createElement('script');
-          script.src = 'https://meet.jit.si/external_api.js';
-          script.async = true;
-          script.onload = () => {
-            console.log('Jitsi script loaded successfully');
-            if (mounted) initializeJitsi(config);
-          };
-          script.onerror = () => {
-            console.error('Failed to load Jitsi script');
-            if (mounted) {
-              setError('Failed to load video conferencing. Please check your internet connection.');
-              setLoading(false);
-            }
-          };
-          document.body.appendChild(script);
-        } else {
-          console.log('Jitsi API already loaded');
-          if (mounted) initializeJitsi(config);
+        // Construct Jitsi meeting URL with config
+        const domain = config.domain || 'meet.jit.si';
+        const roomName = config.roomName;
+        const displayName = encodeURIComponent(config.userInfo?.displayName || 'User');
+        
+        const meetingUrl = `https://${domain}/${roomName}#userInfo.displayName="${displayName}"&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.prejoinPageEnabled=false`;
+        
+        console.log('Opening Jitsi meeting in new window:', meetingUrl);
+
+        // Open in new window
+        const newWindow = window.open(
+          meetingUrl,
+          'JitsiMeeting',
+          'width=1200,height=800,toolbar=no,menubar=no,scrollbars=no,resizable=yes,location=no,status=no'
+        );
+
+        if (!newWindow) {
+          throw new Error('Failed to open meeting window. Please allow popups for this site.');
         }
 
-        function initializeJitsi(config) {
-          console.log('Initializing Jitsi with config:', config);
+        if (mounted) {
+          setMeetingWindow(newWindow);
+          setLoading(false);
           
-          if (!jitsiContainer.current) {
-            console.error('Jitsi container not found');
-            if (mounted) {
-              setError('Failed to initialize meeting container');
-              setLoading(false);
+          // Trigger attendance marking after 5 minutes
+          setTimeout(async () => {
+            try {
+              await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/attendance/mark/${classId}`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              console.log('Attendance marked');
+            } catch (err) {
+              console.error('Failed to mark attendance:', err);
             }
-            return;
-          }
+          }, 5 * 60 * 1000);
 
-          const domain = config.domain || 'meet.jit.si';
-          const options = {
-            roomName: config.roomName,
-            width: '100%',
-            height: '100%',
-            parentNode: jitsiContainer.current,
-            configOverwrite: {
-              prejoinPageEnabled: false,
-              startWithAudioMuted: false,
-              startWithVideoMuted: false,
-              disableDeepLinking: true,
-              enableNoisyMicDetection: false,
-              p2p: {
-                enabled: false
-              }
-            },
-            interfaceConfigOverwrite: {
-              TOOLBAR_BUTTONS: [
-                'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-                'fodeviceselection', 'hangup', 'chat', 'raisehand',
-                'videoquality', 'tileview'
-              ],
-              SHOW_JITSI_WATERMARK: false,
-              SHOW_WATERMARK_FOR_GUESTS: false,
-              DEFAULT_BACKGROUND: '#474747',
-              DISABLE_VIDEO_BACKGROUND: false,
-              filmStripOnly: false,
-              VERTICAL_FILMSTRIP: true
-            },
-            userInfo: {
-              displayName: config.userInfo?.displayName || 'User',
-              email: config.userInfo?.email || ''
+          if (onJoined) onJoined();
+
+          // Check if window is closed
+          windowCheckInterval = setInterval(() => {
+            if (newWindow.closed) {
+              console.log('Meeting window closed');
+              if (onClose) onClose();
             }
-          };
-
-          console.log('Creating Jitsi API instance');
-
-          try {
-            api = new window.JitsiMeetExternalAPI(domain, options);
-            console.log('Jitsi API instance created');
-
-            // Hide loading screen after 2 seconds regardless
-            setTimeout(() => {
-              if (mounted && loading) {
-                console.log('Auto-hiding loading screen after 2 seconds');
-                setLoading(false);
-              }
-            }, 2000);
-          } catch (err) {
-            console.error('Error creating Jitsi instance:', err);
-            if (mounted) {
-              setError('Failed to initialize video meeting: ' + err.message);
-              setLoading(false);
-            }
-            return;
-          }
-
-          // Event listeners
-          api.addEventListener('videoConferenceJoined', () => {
-            console.log('Successfully joined Jitsi meeting');
-            if (mounted) setLoading(false);
-            
-            // Trigger attendance marking (after 5 minutes)
-            setTimeout(async () => {
-              try {
-                await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/attendance/mark/${classId}`, {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                  }
-                });
-                console.log('Attendance marked');
-              } catch (err) {
-                console.error('Failed to mark attendance:', err);
-              }
-            }, 5 * 60 * 1000);
-
-            if (onJoined) onJoined();
-          });
-
-          api.addEventListener('videoConferenceLeft', () => {
-            console.log('Left Jitsi meeting');
-            if (onClose) onClose();
-          });
-
-          api.addEventListener('readyToClose', () => {
-            console.log('Jitsi ready to close');
-            if (onClose) onClose();
-          });
-
-          api.addEventListener('errorOccurred', (e) => {
-            console.error('Jitsi error:', e);
-          });
-
-          if (mounted) setJitsiApi(api);
+          }, 1000);
         }
       } catch (err) {
         console.error('Error loading Jitsi:', err);
-        setError(err.message);
-        setLoading(false);
+        if (mounted) {
+          setError(err.message);
+          setLoading(false);
+        }
       }
     };
 
-    loadJitsiMeet();
+    openJitsiMeeting();
 
     // Cleanup
     return () => {
       mounted = false;
-      if (api) {
-        console.log('Disposing Jitsi API');
-        try {
-          api.dispose();
-        } catch (err) {
-          console.error('Error disposing Jitsi:', err);
-        }
+      if (windowCheckInterval) clearInterval(windowCheckInterval);
+      if (meetingWindow && !meetingWindow.closed) {
+        meetingWindow.close();
       }
     };
   }, [classId, onClose, onJoined]);
 
   const handleClose = () => {
-    if (jitsiApi) {
-      jitsiApi.executeCommand('hangup');
+    if (meetingWindow && !meetingWindow.closed) {
+      meetingWindow.close();
     }
     if (onClose) {
       onClose();
@@ -206,18 +121,21 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
 
   return (
     <div className="jitsi-meeting-overlay">
-      <div className="jitsi-meeting-container">
+      <div className="jitsi-meeting-container jitsi-window-mode">
         <div className="jitsi-header">
-          <h3>Live Class</h3>
+          <h3>Live Class - Meeting Opened in New Window</h3>
           <button className="jitsi-close-btn" onClick={handleClose}>
-            ✕ Leave Class
+            ✕ Close & End Meeting
           </button>
         </div>
 
         {loading && (
           <div className="jitsi-loading">
             <div className="spinner"></div>
-            <p>Connecting to live class...</p>
+            <p>Opening meeting in new window...</p>
+            <p style={{ fontSize: '14px', opacity: 0.8, marginTop: '10px' }}>
+              If the window didn't open, please allow popups for this site.
+            </p>
           </div>
         )}
 
@@ -228,11 +146,13 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
           </div>
         )}
 
-        <div 
-          ref={jitsiContainer} 
-          className="jitsi-container"
-          style={{ display: loading || error ? 'none' : 'block' }}
-        />
+        {!loading && !error && (
+          <div className="jitsi-window-info">
+            <p>✅ Meeting window is open</p>
+            <p>You can minimize this and continue using the dashboard.</p>
+            <p>Click "Close & End Meeting" when you're done.</p>
+          </div>
+        )}
       </div>
     </div>
   );
