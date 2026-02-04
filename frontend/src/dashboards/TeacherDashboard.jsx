@@ -83,9 +83,13 @@ const TeacherDashboard = () => {
   };
 
   const handleStartLive = async (classId, className) => {
+    console.log('Starting live class:', { classId, className });
     try {
       setStartingLive(classId);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/start-live`, {
+      const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/start-live`;
+      console.log('API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -93,11 +97,17 @@ const TeacherDashboard = () => {
         }
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
         const data = await response.json();
+        console.error('Error response:', data);
         throw new Error(data.error || 'Failed to start live class');
       }
 
+      const responseData = await response.json();
+      console.log('Success response:', responseData);
+      
       await checkLiveClasses();
       alert(`${className} is now LIVE! Students can join.`);
       

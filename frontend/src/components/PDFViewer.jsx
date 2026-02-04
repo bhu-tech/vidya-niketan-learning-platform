@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import '../styles/PDFViewer.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const PDFViewer = ({ materialId, fileName, onClose }) => {
   const [loading, setLoading] = useState(true);
@@ -10,17 +11,76 @@ const PDFViewer = ({ materialId, fileName, onClose }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
 
+  console.log('PDFViewer mounted with:', { materialId, fileName });
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Create a blob URL from the PDF endpoint with token
-      const url = `${API_BASE_URL}/api/materials/view/${materialId}?token=${encodeURIComponent(token)}`;
-      setPdfUrl(url);
-      setLoading(false);
-    } else {
-      setError('Authentication token not found');
-      setLoading(false);
-    }
+    const fetchPDF = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Authentication token not found');
+          setLoading(false);
+          return;
+        }
+
+        console.log('Fetching PDF for material ID:', materialId);
+        console.log('API URL:', `${API_BASE_URL}/materials/view/${materialId}`);
+
+        // Fetch the PDF with proper authentication
+        const response = await axios.get(`${API_BASE_URL}/materials/view/${materialId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          responseType: 'blob' // Important: get the response as a blob
+        });
+
+        console.log('Response received:', {
+          status: response.status,
+          contentType: response.headers['content-type'],
+          size: response.data.size,
+          type: response.data.type
+        });
+
+        // Create a blob URL from the response
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        console.log('Blob URL created:', url);
+        setPdfUrl(url);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading PDF:', err);
+        console.error('Error details:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          message: err.message
+        });
+        
+        let errorMessage = 'Failed to load PDF';
+        if (err.response) {
+          // Server responded with error
+          errorMessage = err.response.data?.error || `Server error: ${err.response.status}`;
+        } else if (err.request) {
+          // Request made but no response
+          errorMessage = 'No response from server. Check if backend is running.';
+        } else {
+          // Error in request setup
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
+        setLoading(false);
+      }
+    };
+
+    fetchPDF();
+
+    // Cleanup function to revoke the blob URL when component unmounts
+    return () => {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
   }, [materialId]);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import { classAPI, materialAPI, zoomAPI, attendanceAPI, topperAPI, userAPI, resu
 import { useAuth } from '../hooks/useAuth';
 import PDFViewer from '../components/PDFViewer';
 import StudentNotifications from '../components/StudentNotifications';
+import JitsiMeeting from '../components/JitsiMeeting';
 import '../styles/ClassDetail.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
@@ -56,6 +57,7 @@ const ClassDetail = () => {
   });
   const [showResultForm, setShowResultForm] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [activeJitsiClass, setActiveJitsiClass] = useState(null);
 
   useEffect(() => {
     fetchClassData();
@@ -278,10 +280,57 @@ const ClassDetail = () => {
 
   const handleCreateZoomMeeting = async () => {
     try {
-      const meetingData = await zoomAPI.createMeeting(classId);
-      alert('Live class created! Join URL: ' + meetingData.joinUrl);
+      const response = await fetch(`${API_BASE_URL}/api/classes/${classId}/start-live`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to start live class');
+      }
+
+      const data = await response.json();
+      alert('Live class started! Students can now join.');
+      
+      // Refresh the class data to show live status
+      await fetchClassData();
+      
+      // Auto-join the meeting
+      setActiveJitsiClass(classId);
     } catch (error) {
       console.error('Error creating live class:', error);
+      alert('Failed to start live class: ' + error.message);
+    }
+  };
+
+  const handleEndLive = async () => {
+    const confirmed = window.confirm('End live class?\n\nStudents will no longer be able to join.');
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/classes/${classId}/end-live`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to end live class');
+      }
+
+      alert('Live class has ended.');
+      setActiveJitsiClass(null);
+      await fetchClassData();
+    } catch (error) {
+      console.error('Error ending live class:', error);
+      alert('Failed to end live class: ' + error.message);
     }
   };
 
@@ -516,21 +565,33 @@ const ClassDetail = () => {
         {activeTab === 'zoom' && (
           <section className="zoom-section">
             <h2>🎥 Live Class</h2>
-            {classData.zoomJoinUrl ? (
+            {classData.isLive ? (
               <>
-                <p>Meeting Link Available</p>
-                <a href={classData.zoomJoinUrl} target="_blank" rel="noopener noreferrer" className="btn-zoom">
-                  Join Live Class
-                </a>
+                {classData.isLive && <div className="live-indicator">🔴 Class is LIVE</div>}
+                <button className="btn-primary" onClick={() => setActiveJitsiClass(classId)}>
+                  {user.role === 'teacher' ? '🎥 Join/Host Live Class' : '🎥 Join Live Class'}
+                </button>
+                {user && ['teacher', 'admin'].includes(user.role) && (
+                  <button className="btn-danger" onClick={handleEndLive} style={{ marginLeft: '10px' }}>
+                    ⏹️ End Live Class
+                  </button>
+                )}
               </>
-            ) : user && user.role === 'teacher' ? (
+            ) : user && ['teacher', 'admin'].includes(user.role) ? (
               <button className="btn-primary" onClick={handleCreateZoomMeeting}>
-                Create Live Class
+                ▶️ Start Live Class
               </button>
             ) : (
-              <p>No meeting scheduled yet. Check back later!</p>
+              <p>No live class at the moment. Check back later!</p>
             )}
           </section>
+        )}
+
+        {activeJitsiClass && (
+          <JitsiMeeting
+            classId={activeJitsiClass}
+            onClose={() => setActiveJitsiClass(null)}
+          />
         )}
 
         {activeTab === 'students' && (
@@ -628,7 +689,6 @@ const ClassDetail = () => {
                           alt={material.title}
                         />
                         <div className="thumbnail-overlay">
-                          <span className="view-icon">👁️</span>
                         </div>
                       </div>
                     ) : (
@@ -637,7 +697,7 @@ const ClassDetail = () => {
                           onClick={() => handleViewPDF(material._id, material.fileName)}
                           className="btn"
                         >
-                          👁️ View PDF
+                          View PDF
                         </button>
                       </div>
                     )}
@@ -684,7 +744,6 @@ const ClassDetail = () => {
                           alt={material.title}
                         />
                         <div className="thumbnail-overlay">
-                          <span className="view-icon">👁️</span>
                         </div>
                       </div>
                     ) : (
@@ -693,7 +752,7 @@ const ClassDetail = () => {
                           onClick={() => handleViewPDF(material._id, material.fileName)}
                           className="btn"
                         >
-                          👁️ View PDF
+                          View PDF
                         </button>
                       </div>
                     )}

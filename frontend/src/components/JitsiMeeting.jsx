@@ -9,11 +9,14 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
 
   useEffect(() => {
     let api = null;
+    let mounted = true;
 
     const loadJitsiMeet = async () => {
       try {
         // Fetch Jitsi configuration from backend
         const token = localStorage.getItem('token');
+        console.log('Fetching Jitsi config for class:', classId);
+        
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -26,47 +29,105 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
         }
 
         const config = await response.json();
+        console.log('Jitsi config received:', config);
 
         // Check if class is live
         if (!config.isLive) {
-          setError('This class is not currently live. Please wait for the teacher to start the class.');
-          setLoading(false);
+          if (mounted) {
+            setError('This class is not currently live. Please wait for the teacher to start the class.');
+            setLoading(false);
+          }
           return;
         }
 
         // Load Jitsi Meet External API
         if (!window.JitsiMeetExternalAPI) {
+          console.log('Loading Jitsi external API script...');
           const script = document.createElement('script');
           script.src = 'https://meet.jit.si/external_api.js';
           script.async = true;
-          script.onload = () => initializeJitsi(config);
+          script.onload = () => {
+            console.log('Jitsi script loaded successfully');
+            if (mounted) initializeJitsi(config);
+          };
           script.onerror = () => {
-            setError('Failed to load video conferencing. Please refresh and try again.');
-            setLoading(false);
+            console.error('Failed to load Jitsi script');
+            if (mounted) {
+              setError('Failed to load video conferencing. Please check your internet connection.');
+              setLoading(false);
+            }
           };
           document.body.appendChild(script);
         } else {
-          initializeJitsi(config);
+          console.log('Jitsi API already loaded');
+          if (mounted) initializeJitsi(config);
         }
 
         function initializeJitsi(config) {
+          console.log('Initializing Jitsi with config:', config);
+          
+          if (!jitsiContainer.current) {
+            console.error('Jitsi container not found');
+            if (mounted) {
+              setError('Failed to initialize meeting container');
+              setLoading(false);
+            }
+            return;
+          }
+
           const domain = config.domain || 'meet.jit.si';
           const options = {
             roomName: config.roomName,
             width: '100%',
             height: '100%',
             parentNode: jitsiContainer.current,
-            configOverwrite: config.configOverwrite,
-            interfaceConfigOverwrite: config.interfaceConfigOverwrite,
-            userInfo: config.userInfo
+            configOverwrite: {
+              prejoinPageEnabled: false,
+              startWithAudioMuted: false,
+              startWithVideoMuted: false,
+              disableDeepLinking: true
+            },
+            interfaceConfigOverwrite: {
+              TOOLBAR_BUTTONS: [
+                'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+                'fodeviceselection', 'hangup', 'chat', 'raisehand',
+                'videoquality', 'tileview'
+              ],
+              SHOW_JITSI_WATERMARK: false,
+              SHOW_WATERMARK_FOR_GUESTS: false
+            },
+            userInfo: {
+              displayName: config.userInfo?.displayName || 'User',
+              email: config.userInfo?.email || ''
+            }
           };
 
-          api = new window.JitsiMeetExternalAPI(domain, options);
+          console.log('Creating Jitsi API instance');
+
+          try {
+            api = new window.JitsiMeetExternalAPI(domain, options);
+            console.log('Jitsi API instance created');
+
+            // Hide loading screen after 2 seconds regardless
+            setTimeout(() => {
+              if (mounted && loading) {
+                console.log('Auto-hiding loading screen after 2 seconds');
+                setLoading(false);
+              }
+            }, 2000);
+          } catch (err) {
+            console.error('Error creating Jitsi instance:', err);
+            if (mounted) {
+              setError('Failed to initialize video meeting: ' + err.message);
+              setLoading(false);
+            }
+            return;
+          }
 
           // Event listeners
           api.addEventListener('videoConferenceJoined', () => {
-            setLoading(false);
-            console.log('Joined Jitsi meeting');
+            console.log('Successfully joined Jitsi meeting');
+            if (mounted) setLoading(false);
             
             // Trigger attendance marking (after 5 minutes)
             setTimeout(async () => {
@@ -82,27 +143,26 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
               } catch (err) {
                 console.error('Failed to mark attendance:', err);
               }
-            }, 5 * 60 * 1000); // 5 minutes
+            }, 5 * 60 * 1000);
 
-            if (onJoined) {
-              onJoined();
-            }
+            if (onJoined) onJoined();
           });
 
           api.addEventListener('videoConferenceLeft', () => {
             console.log('Left Jitsi meeting');
-            if (onClose) {
-              onClose();
-            }
+            if (onClose) onClose();
           });
 
           api.addEventListener('readyToClose', () => {
-            if (onClose) {
-              onClose();
-            }
+            console.log('Jitsi ready to close');
+            if (onClose) onClose();
           });
 
-          setJitsiApi(api);
+          api.addEventListener('errorOccurred', (e) => {
+            console.error('Jitsi error:', e);
+          });
+
+          if (mounted) setJitsiApi(api);
         }
       } catch (err) {
         console.error('Error loading Jitsi:', err);
@@ -115,8 +175,14 @@ const JitsiMeeting = ({ classId, onClose, onJoined }) => {
 
     // Cleanup
     return () => {
+      mounted = false;
       if (api) {
-        api.dispose();
+        console.log('Disposing Jitsi API');
+        try {
+          api.dispose();
+        } catch (err) {
+          console.error('Error disposing Jitsi:', err);
+        }
       }
     };
   }, [classId, onClose, onJoined]);

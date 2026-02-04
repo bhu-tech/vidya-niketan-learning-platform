@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const Material = require('../models/Material');
 const Class = require('../models/Class');
@@ -73,11 +74,20 @@ router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher', 'admi
 
     // Use Cloudinary if configured, otherwise use local storage
     if (isCloudinaryConfigured()) {
+      // Sanitize filename for Cloudinary (remove special characters)
+      const sanitizeForCloudinary = (filename) => {
+        return filename
+          .replace(/\.[^/.]+$/, '') // Remove extension
+          .replace(/[^a-zA-Z0-9-_]/g, '_') // Replace invalid chars with underscore
+          .substring(0, 100); // Limit length
+      };
+
       // Upload PDF to Cloudinary
       const pdfUpload = await cloudinary.uploader.upload(pdfFile.path, {
         folder: 'vidya-niketan/pdfs',
         resource_type: 'raw',
-        public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`
+        public_id: `${Date.now()}_${sanitizeForCloudinary(pdfFile.originalname)}`,
+        access_mode: 'public' // Make PDF publicly accessible
       });
       fileUrl = pdfUpload.secure_url;
 
@@ -87,7 +97,8 @@ router.post('/upload/:classId', authMiddleware, roleMiddleware(['teacher', 'admi
           folder: 'vidya-niketan/thumbnails',
           resource_type: 'image',
           transformation: [{ width: 400, height: 300, crop: 'fill' }],
-          public_id: `${Date.now()}-${thumbnailFile.originalname.replace(/\.[^/.]+$/, '')}`
+          public_id: `${Date.now()}_${sanitizeForCloudinary(thumbnailFile.originalname)}`,
+          access_mode: 'public' // Make thumbnail publicly accessible
         });
         thumbnailUrl = thumbnailUpload.secure_url;
       }
@@ -221,17 +232,25 @@ router.get('/view/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // For Cloudinary URLs, redirect to the secure URL
+    // For Cloudinary URLs, redirect directly to the URL
     if (material.fileUrl.startsWith('http')) {
       return res.redirect(material.fileUrl);
     }
 
-    // Legacy: For old local file paths (if any remain)
+    // Legacy: For local file paths (when Cloudinary is not configured)
     const filePath = path.join(pdfsDir, path.basename(material.fileUrl));
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error(`PDF file not found at path: ${filePath}`);
+      return res.status(404).json({ error: 'PDF file not found on server' });
+    }
+    
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename=' + material.fileName);
+    res.setHeader('Content-Disposition', `inline; filename="${material.fileName}"`);
     res.sendFile(filePath);
   } catch (error) {
+    console.error('Error in view material route:', error);
     res.status(500).json({ error: error.message });
   }
 });

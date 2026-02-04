@@ -53,11 +53,24 @@ const getJitsiEmbedConfig = (roomName, user) => {
     roomName: roomName,
     domain: 'meet.jit.si',
     configOverwrite: {
-      startWithAudioMuted: true,
+      startWithAudioMuted: false,
       startWithVideoMuted: false,
       enableWelcomePage: false,
       prejoinPageEnabled: false,
-      enableClosePage: false
+      enableClosePage: false,
+      disableModeratorIndicator: false,
+      startScreenSharing: false,
+      enableEmailInStats: false,
+      enableLobbyChat: false,
+      disableLobby: true,
+      enableNoAudioDetection: true,
+      enableNoisyMicDetection: true,
+      resolution: 720,
+      constraints: {
+        video: {
+          height: { ideal: 720, max: 1080, min: 240 }
+        }
+      }
     },
     interfaceConfigOverwrite: {
       TOOLBAR_BUTTONS: [
@@ -68,7 +81,9 @@ const getJitsiEmbedConfig = (roomName, user) => {
       SHOW_JITSI_WATERMARK: false,
       SHOW_WATERMARK_FOR_GUESTS: false,
       DEFAULT_BACKGROUND: '#474747',
-      DISABLE_JOIN_LEAVE_NOTIFICATIONS: true
+      DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+      DISABLE_VIDEO_BACKGROUND: false,
+      VIDEO_QUALITY_LABEL_DISABLED: false
     },
     userInfo: {
       displayName: user.name,

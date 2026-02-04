@@ -75,6 +75,7 @@ const classReminderTemplate = (user, classData, minutesBefore) => {
           </div>
         ` : `
           <p style="text-align: center; color: #6b7280;">Live class link will be available soon</p>
+        `}
 
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">

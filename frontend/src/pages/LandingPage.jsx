@@ -62,7 +62,8 @@ const LandingPage = () => {
       <section className="hero-section">
         <div className="hero-background">
           <div className="hero-content">
-            <h1 className="hero-title">India's Trusted & Affordable Educational Platform</h1>
+            <h1 className="hero-title">Vidya Niketan - Hapur Best Coaching Institute for IX to XII</h1>
+            <h2 className="hero-subtitle">CBSE, JEE & NEET Coaching in Hapur with Expert Teachers</h2>
             <p className="hero-subtitle">
               Learn with love and grow with guidance. Access live classes, study materials, and expert guidance.
             </p>
