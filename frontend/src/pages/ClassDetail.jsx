@@ -71,11 +71,11 @@ const ClassDetail = () => {
 
   const fetchStudents = async () => {
     try {
-      const data = await userAPI.getAllStudents();
+      const studentsData = await userAPI.getAllStudents();
       // Filter students enrolled in this class
       if (classData) {
         const enrolledIds = classData.students.map(s => s._id || s);
-        setStudents(data.filter(student => enrolledIds.includes(student._id)));
+        setStudents(studentsData.filter(student => enrolledIds.includes(student._id)));
       }
     } catch (error) {
       console.error('Error fetching students:', error);
