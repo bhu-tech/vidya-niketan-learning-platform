@@ -309,7 +309,7 @@ const ClassDetail = () => {
         throw new Error(data.error || 'Failed to start live class');
       }
 
-      const data = await response.json();
+      await response.json();
       alert('Live class started! Students can now join.');
       // Refresh the class data to show live status
       await fetchClassData();
