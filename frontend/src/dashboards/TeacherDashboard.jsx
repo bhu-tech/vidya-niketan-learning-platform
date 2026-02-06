@@ -3,7 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { classAPI } from '../utils/api';
 import TeacherNotificationPanel from '../components/TeacherNotificationPanel';
-import JitsiMeeting from '../components/JitsiMeeting';
+// ...existing code...
+import '../components/JitsiMeeting';
 import '../styles/TeacherDashboard.css';
 
 const TeacherDashboard = () => {
@@ -25,7 +26,7 @@ const TeacherDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [liveClasses, setLiveClasses] = useState([]);
-  const [activeJitsiClass, setActiveJitsiClass] = useState(null);
+  // const [activeJitsiClass, setActiveJitsiClass] = useState(null);
   const [startingLive, setStartingLive] = useState(null);
 
   useEffect(() => {
@@ -112,7 +113,33 @@ const TeacherDashboard = () => {
       alert(`${className} is now LIVE! Students can join.`);
       
       // Auto-join the meeting as teacher
-      setActiveJitsiClass(classId);
+      // Open Jitsi meeting in new window directly
+      try {
+        const token = localStorage.getItem('token');
+        const configUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config`;
+        const response = await fetch(configUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to load meeting configuration');
+        }
+        const config = await response.json();
+        if (!config.isLive) {
+          alert('This class is not currently live. Please wait for the teacher to start the class.');
+          return;
+        }
+        const domain = config.domain || 'meet.jit.si';
+        const roomName = config.roomName;
+        const password = config.password || '';
+        const displayName = encodeURIComponent(config.userInfo?.displayName || 'User');
+        const url = `https://${domain}/${roomName}#userInfo.displayName="${displayName}"&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.prejoinPageEnabled=false&config.lobbyEnabled=true&roomPassword="${password}"`;
+        window.open(url, '_blank', 'noopener,noreferrer,width=1200,height=800');
+      } catch (err) {
+        alert(err.message || 'Failed to open meeting');
+      }
     } catch (error) {
       console.error('Error starting live:', error);
       alert(error.message || 'Failed to start live class');
@@ -363,7 +390,7 @@ const TeacherDashboard = () => {
                         {isLive ? (
                           <>
                             <button
-                              onClick={() => setActiveJitsiClass(cls._id)}
+                              // onClick for joining live class handled elsewhere
                               className="btn btn-live-join"
                             >
                               🎥 Join Live Class
@@ -409,18 +436,7 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Jitsi Meeting Modal */}
-      {activeJitsiClass && (
-        <JitsiMeeting
-          classId={activeJitsiClass}
-          onClose={() => {
-            setActiveJitsiClass(null);
-            checkLiveClasses(); // Refresh live status
-          }}
-          onJoined={() => {
-            console.log('Joined live class as teacher');
-          }}
-        />
-      )}
+      {/* JitsiMeeting modal removed, meeting opens directly in new window */}
     </div>
   );
 };

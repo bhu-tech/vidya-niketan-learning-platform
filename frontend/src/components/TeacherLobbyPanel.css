@@ -1,0 +1,79 @@
+.teacher-lobby-panel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 24px 18px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.teacher-lobby-panel h3 {
+  margin-top: 0;
+  color: #334155;
+}
+.lobby-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.lobby-controls button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.lobby-controls button:hover {
+  background: #4f46e5;
+}
+.lobby-student-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.lobby-student {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.lobby-student:last-child {
+  border-bottom: none;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e0e7ef;
+}
+.name {
+  flex: 1;
+  color: #334155;
+  font-weight: 500;
+}
+.join-time {
+  color: #64748b;
+  font-size: 0.95em;
+  margin-right: 8px;
+}
+.admit {
+  background: #22c55e;
+}
+.admit:hover {
+  background: #16a34a;
+}
+.deny {
+  background: #ef4444;
+}
+.deny:hover {
+  background: #b91c1c;
+}
+.empty {
+  color: #64748b;
+  text-align: center;
+  padding: 18px 0;
+}

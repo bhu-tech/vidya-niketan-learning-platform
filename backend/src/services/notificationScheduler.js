@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const Class = require('../models/Class');
 const User = require('../models/User');
-const { sendMail } = require('../utils/mailer');
+const { sendMail, isSMTPConfigured } = require('../utils/mailer');
 const { classReminderTemplate } = require('../utils/emailTemplates');
 
 // Helper to get today's date string
@@ -47,6 +47,11 @@ const wasNotificationSentToday = (classData, notificationType) => {
 // Send reminder emails
 const sendClassReminder = async (classData, minutesBefore) => {
   try {
+    // Skip if email not configured
+    if (!isSMTPConfigured()) {
+      return;
+    }
+
     const notificationType = `${minutesBefore}min`;
 
     // Check if notification already sent today

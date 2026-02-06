@@ -57,13 +57,14 @@ router.post('/signup', signupValidation, async (req, res) => {
 
     // If user requires admin approval, do not issue token yet
     if (!user.isApproved) {
-      // notify all admins by email, but only once per user
+      // notify all admins by email, but only once per user (skip if email not configured)
       try {
         if (!user.approvalNotified) {
           const admins = await User.find({ role: 'admin' }).select('email name');
           const adminEmails = admins.map(a => a.email).filter(Boolean);
           if (adminEmails.length) {
             const { subject, html } = adminNewSignupTemplate(user);
+            // sendMail will handle gracefully if SMTP not configured
             await sendMail({ to: adminEmails.join(','), subject, html });
           }
           user.approvalNotified = true;

@@ -79,9 +79,9 @@ const getJitsiEmbedConfig = (roomName, user, password, isModerator = false) => {
       disableModeratorIndicator: false,
       startScreenSharing: false,
       enableEmailInStats: false,
-      // Enable lobby - students wait for teacher approval
-      enableLobbyChat: true,
-      lobbyEnabled: true,
+      // Disable lobby - security is handled by backend join tokens
+      enableLobbyChat: false,
+      lobbyEnabled: false,
       requireDisplayName: true,
       enableNoAudioDetection: true,
       enableNoisyMicDetection: true,

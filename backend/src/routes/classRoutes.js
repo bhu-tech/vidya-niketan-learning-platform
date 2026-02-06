@@ -151,7 +151,12 @@ router.post('/:id/request-join-token', authMiddleware, async (req, res) => {
     const isTeacher = classData.teacher._id.toString() === req.user.id;
     const isStudent = classData.students.some(s => s._id.toString() === req.user.id);
 
-    if (!isTeacher && !isStudent) {
+    // Teachers don't need tokens - they join directly as moderators
+    if (isTeacher) {
+      return res.status(400).json({ error: 'Teachers join directly as moderators without tokens' });
+    }
+
+    if (!isStudent) {
       return res.status(403).json({ error: 'You are not enrolled in this class' });
     }
 
