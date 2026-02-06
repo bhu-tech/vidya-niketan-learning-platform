@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { classAPI, materialAPI, zoomAPI, attendanceAPI, topperAPI, userAPI, resultAPI } from '../utils/api';
+import { classAPI, materialAPI, attendanceAPI, topperAPI, userAPI, resultAPI } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import PDFViewer from '../components/PDFViewer';
 import StudentNotifications from '../components/StudentNotifications';
@@ -311,12 +311,9 @@ const ClassDetail = () => {
 
       const data = await response.json();
       alert('Live class started! Students can now join.');
-      
       // Refresh the class data to show live status
       await fetchClassData();
-      
-      // Auto-join the meeting
-      setActiveJitsiClass(classId);
+      // Auto-join the meeting (removed setActiveJitsiClass)
     } catch (error) {
       console.error('Error creating live class:', error);
       alert('Failed to start live class: ' + error.message);

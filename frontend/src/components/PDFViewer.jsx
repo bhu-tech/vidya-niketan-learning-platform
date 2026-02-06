@@ -90,7 +90,7 @@ const PDFViewer = ({ materialId, fileName, onClose }) => {
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  }, [pdfUrl]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
