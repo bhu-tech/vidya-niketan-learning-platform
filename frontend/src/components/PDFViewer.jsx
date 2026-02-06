@@ -83,6 +83,7 @@ const PDFViewer = ({ materialId, fileName, onClose }) => {
     };
   }, [materialId]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -90,7 +91,7 @@ const PDFViewer = ({ materialId, fileName, onClose }) => {
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [pdfUrl]);
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
