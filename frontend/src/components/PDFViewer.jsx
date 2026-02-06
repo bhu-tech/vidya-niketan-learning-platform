@@ -81,7 +81,7 @@ const PDFViewer = ({ materialId, fileName, onClose }) => {
         URL.revokeObjectURL(pdfUrl);
       }
     };
-  }, [materialId]);
+  }, [materialId, pdfUrl]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
