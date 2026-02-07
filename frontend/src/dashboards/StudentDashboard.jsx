@@ -46,7 +46,6 @@ const StudentDashboard = () => {
   const [resultsLoading, setResultsLoading] = useState(false);
   const [liveClasses, setLiveClasses] = useState([]);
   // const [activeJitsiClass, setActiveJitsiClass] = useState(null);
-  const [meetingActive, setMeetingActive] = useState({}); // Track meeting status per class
 
   useEffect(() => {
     fetchClasses();
