@@ -169,7 +169,6 @@ router.post('/:id/request-join-token', authMiddleware, async (req, res) => {
         activeSession: true,
         tokenExpiry: { $gt: new Date() }
       });
-
       if (activeSession) {
         return res.status(400).json({ 
           error: 'You already have an active session. Please close your existing meeting window first.' 
@@ -183,26 +182,31 @@ router.post('/:id/request-join-token', authMiddleware, async (req, res) => {
 
     // Create or update attendance record
     if (isStudent) {
-      await Attendance.findOneAndUpdate(
-        {
-          class: req.params.id,
-          student: req.user.id,
-          date: new Date().setHours(0, 0, 0, 0)
-        },
-        {
-          joinTime: new Date(),
-          classStartTime: classData.liveStartedAt,
-          activeSession: true,
-          joinToken: token,
-          tokenExpiry: tokenExpiry
-        },
+      const attendanceQuery = {
+        class: req.params.id,
+        student: req.user.id,
+        date: new Date().setHours(0, 0, 0, 0)
+      };
+      const attendanceUpdate = {
+        joinTime: new Date(),
+        classStartTime: classData.liveStartedAt,
+        activeSession: true,
+        joinToken: token,
+        tokenExpiry: tokenExpiry
+      };
+      const attendanceResult = await Attendance.findOneAndUpdate(
+        attendanceQuery,
+        attendanceUpdate,
         { upsert: true, new: true }
       );
+      console.log('REQUEST JOIN TOKEN QUERY:', attendanceQuery);
+      console.log('REQUEST JOIN TOKEN UPDATE:', attendanceUpdate);
+      console.log('REQUEST JOIN TOKEN RESULT:', attendanceResult);
     }
 
     res.json({ 
       token,
-      expiresIn: 120 // seconds
+      expiresIn: 900 // seconds (15 minutes)
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -234,26 +238,23 @@ router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
     // For students, validate join token
     if (!isModerator) {
       const { token } = req.query;
-      
       if (!token) {
         return res.status(400).json({ error: 'Join token required' });
       }
-
-      // Find and validate token
-      const attendance = await Attendance.findOne({
+      const attendanceQuery = {
         class: classData._id,
-        student: req.user._id,
+        student: req.user._id || req.user.id,
         joinToken: token
-      });
-
+      };
+      const attendance = await Attendance.findOne(attendanceQuery);
+      console.log('JITSI CONFIG TOKEN QUERY:', attendanceQuery);
+      console.log('JITSI CONFIG TOKEN RESULT:', attendance);
       if (!attendance) {
         return res.status(403).json({ error: 'Invalid or expired join token' });
       }
-
       if (!attendance.tokenExpiry || attendance.tokenExpiry < Date.now()) {
         return res.status(403).json({ error: 'Join token has expired' });
       }
-
       // Consume the token (one-time use) and clear active session on successful join
       attendance.joinToken = null;
       attendance.tokenExpiry = null;
