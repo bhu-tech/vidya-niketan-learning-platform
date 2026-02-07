@@ -179,7 +179,7 @@ router.post('/:id/request-join-token', authMiddleware, async (req, res) => {
 
     // Generate one-time token
     const token = crypto.randomBytes(32).toString('hex');
-    const tokenExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+    const tokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Create or update attendance record
     if (isStudent) {
