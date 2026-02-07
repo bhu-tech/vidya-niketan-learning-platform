@@ -233,7 +233,7 @@ router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
     }
 
     // Determine if user is moderator (teacher)
-    const isModerator = isTeacher;
+    const isModerator = isTeacher === true;
 
     // For students, validate join token
     if (!isModerator) {
@@ -263,8 +263,14 @@ router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
     }
 
     const user = { name: req.user.name || 'User', email: req.user.email };
-    const config = getJitsiEmbedConfig(classData.jitsiRoomName, user, classData.meetingPassword, isModerator);
-
+    let config = getJitsiEmbedConfig(classData.jitsiRoomName, user, classData.meetingPassword, isModerator);
+    // Always enable lobby for students (non-moderators)
+    if (!isModerator) {
+      config = {
+        ...config,
+        lobbyEnabled: true
+      };
+    }
     res.json({
       ...config,
       isLive: classData.isLive,
