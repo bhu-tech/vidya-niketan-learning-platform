@@ -62,7 +62,7 @@ const StudentDashboard = () => {
         })
         .then(res => res.json())
         .then(data => {
-          setMeetingActive(prev => ({ ...prev, [lc.classId]: data.active }));
+          // Removed setMeetingActive (was undefined)
           if (!data.active) {
             alert('Meeting has ended by teacher.');
             // Optionally redirect or close meeting window
