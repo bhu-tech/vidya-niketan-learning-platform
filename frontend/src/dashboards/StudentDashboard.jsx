@@ -1,3 +1,28 @@
+  // Leave Meeting handler for students
+  const handleLeaveMeeting = async (classId) => {
+    const authToken = localStorage.getItem('token');
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/end-session`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        alert('You have left the meeting.');
+        // Optionally refresh state or UI here
+      } else {
+        alert(data.error || 'Failed to leave meeting');
+      }
+    } catch (err) {
+      alert('Failed to leave meeting');
+    }
+  };
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -284,13 +309,21 @@ const StudentDashboard = () => {
                     {liveClasses.map(lc => {
                       const cls = classes.find(c => c._id === lc.classId);
                       return cls ? (
-                        <button
-                          key={lc.classId}
-                          className="btn-join-live"
-                          onClick={() => handleJoinLiveClass(lc.classId)}
-                        >
-                          🎥 Join {cls.title}
-                        </button>
+                        <div key={lc.classId} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <button
+                            className="btn-join-live"
+                            onClick={() => handleJoinLiveClass(lc.classId)}
+                          >
+                            🎥 Join {cls.title}
+                          </button>
+                          <button
+                            className="btn-leave-meeting"
+                            style={{ background: '#e57373', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px' }}
+                            onClick={() => handleLeaveMeeting(lc.classId)}
+                          >
+                            🚪 Leave Meeting
+                          </button>
+                        </div>
                       ) : null;
                     })}
                   </div>
