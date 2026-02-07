@@ -1,6 +1,7 @@
 const express = require('express');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const Class = require('../models/Class');
+const Attendance = require('../models/Attendance');
 const { classValidation, mongoIdValidation } = require('../middleware/validation');
 const { createJitsiMeeting, getJitsiEmbedConfig } = require('../utils/jitsi');
 const router = express.Router();
@@ -132,7 +133,7 @@ router.post('/:id/end-live', authMiddleware, roleMiddleware(['teacher']), async 
 // Request join token (prevents duplicate joins)
 router.post('/:id/request-join-token', authMiddleware, async (req, res) => {
   try {
-    const Attendance = require('../models/Attendance');
+    // Attendance model is already imported at the top
     const crypto = require('crypto');
     
     const classData = await Class.findById(req.params.id)
