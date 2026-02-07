@@ -46,15 +46,38 @@ const StudentDashboard = () => {
   const [resultsLoading, setResultsLoading] = useState(false);
   const [liveClasses, setLiveClasses] = useState([]);
   // const [activeJitsiClass, setActiveJitsiClass] = useState(null);
+  const [meetingActive, setMeetingActive] = useState({}); // Track meeting status per class
 
   useEffect(() => {
     fetchClasses();
     checkLiveClasses();
     // Poll for live classes every 30 seconds
     const interval = setInterval(checkLiveClasses, 30000);
-    return () => clearInterval(interval);
+    // Poll for meeting end every 10 seconds
+    const meetingPoll = setInterval(() => {
+      liveClasses.forEach(lc => {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${lc.classId}/session-status`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          setMeetingActive(prev => ({ ...prev, [lc.classId]: data.active }));
+          if (!data.active) {
+            alert('Meeting has ended by teacher.');
+            // Optionally redirect or close meeting window
+          }
+        })
+        .catch(() => {});
+      });
+    }, 10000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(meetingPoll);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, liveClasses]);
 
   const fetchFeeDetails = async () => {
     try {
