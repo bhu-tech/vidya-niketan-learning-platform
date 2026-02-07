@@ -281,30 +281,37 @@ router.get('/:id/jitsi-config', authMiddleware, async (req, res) => {
 router.post('/:id/end-session', authMiddleware, async (req, res) => {
   try {
     const classData = await Class.findById(req.params.id);
-    
     if (!classData) {
       return res.status(404).json({ error: 'Class not found' });
     }
 
-    // Clear active session for this student
-    await Attendance.findOneAndUpdate(
-      {
-        class: classData._id,
-        student: req.user._id,
-        date: {
-          $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          $lt: new Date(new Date().setHours(23, 59, 59, 999))
-        }
-      },
-      {
-        activeSession: false,
-        joinToken: null,
-        tokenExpiry: null
+    // Build query for attendance record
+    const query = {
+      class: classData._id,
+      student: req.user._id,
+      date: {
+        $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        $lt: new Date(new Date().setHours(23, 59, 59, 999))
       }
-    );
+    };
+    console.log('LEAVE MEETING QUERY:', query);
 
-    res.json({ success: true, message: 'Session ended' });
+    const update = {
+      activeSession: false,
+      joinToken: null,
+      tokenExpiry: null
+    };
+
+    const result = await Attendance.findOneAndUpdate(query, update, { new: true });
+    console.log('LEAVE MEETING RESULT:', result);
+
+    if (!result) {
+      return res.status(404).json({ error: 'Attendance record not found for this session.' });
+    }
+
+    res.json({ success: true, message: 'Session ended', attendance: result });
   } catch (error) {
+    console.error('LEAVE MEETING ERROR:', error);
     res.status(500).json({ error: error.message });
   }
 });
