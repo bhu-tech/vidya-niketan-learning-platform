@@ -124,18 +124,39 @@ const StudentDashboard = () => {
     const liveClass = liveClasses.find(lc => lc.classId === classId);
     if (liveClass) {
       try {
-        const token = localStorage.getItem('token');
-        const configUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config`;
+        const authToken = localStorage.getItem('token');
+        // Get user info to check if teacher
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const isTeacher = user?.role === 'teacher';
+        let joinToken = null;
+        let configUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/jitsi-config`;
+        if (!isTeacher) {
+          // Request join token for student
+          const tokenResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/request-join-token`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const tokenData = await tokenResponse.json();
+          if (!tokenResponse.ok) {
+            throw new Error(tokenData.error || 'Failed to request join token');
+          }
+          joinToken = tokenData.token;
+          configUrl = `${configUrl}?token=${joinToken}`;
+        }
+        // Now fetch Jitsi config
         const response = await fetch(configUrl, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${authToken}`
           }
         });
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Failed to load meeting configuration');
-        }
         const config = await response.json();
+        if (!response.ok) {
+          throw new Error(config.error || 'Failed to load meeting configuration');
+        }
         if (!config.isLive) {
           alert('This class is not currently live. Please wait for the teacher to start the class.');
           return;
