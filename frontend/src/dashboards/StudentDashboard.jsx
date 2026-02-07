@@ -1,34 +1,36 @@
-  // Leave Meeting handler for students
-  const handleLeaveMeeting = async (classId) => {
-    const authToken = localStorage.getItem('token');
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/end-session`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      const data = await response.json();
-      if (response.ok) {
-        alert('You have left the meeting.');
-        // Optionally refresh state or UI here
-      } else {
-        alert(data.error || 'Failed to leave meeting');
-      }
-    } catch (err) {
-      alert('Failed to leave meeting');
-    }
-  };
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { classAPI, userAPI, feeAPI, resultAPI } from '../utils/api';
 import '../components/JitsiMeeting';
 import '../styles/StudentDashboard.css';
+
+// Leave Meeting handler for students
+const handleLeaveMeeting = async (classId) => {
+  const authToken = localStorage.getItem('token');
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/classes/${classId}/end-session`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    const data = await response.json();
+    if (response.ok) {
+      alert('You have left the meeting.');
+      // Optionally refresh state or UI here
+    } else {
+      alert(data.error || 'Failed to leave meeting');
+    }
+  } catch (err) {
+    alert('Failed to leave meeting');
+  }
+};
 
 const StudentDashboard = () => {
   const { user, setUser } = useAuth();
