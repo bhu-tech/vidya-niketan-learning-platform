@@ -8,7 +8,10 @@ const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
+
 const app = express();
+// Trust first proxy (Render, Heroku, etc.) for correct client IP and rate limiting
+app.set('trust proxy', 1);
 
 // Rate limiting
 const generalLimiter = rateLimit({
