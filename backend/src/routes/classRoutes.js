@@ -286,9 +286,10 @@ router.post('/:id/end-session', authMiddleware, async (req, res) => {
     }
 
     // Build query for attendance record
+    const studentId = req.user._id || req.user.id;
     const query = {
       class: classData._id,
-      student: req.user._id,
+      student: studentId,
       date: {
         $gte: new Date(new Date().setHours(0, 0, 0, 0)),
         $lt: new Date(new Date().setHours(23, 59, 59, 999))
